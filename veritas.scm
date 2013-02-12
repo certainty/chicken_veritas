@@ -19,17 +19,17 @@
   (apply (current-success-notification-receiver) args))
 
 ;; these are the core macros that do the basic dispatch.
-;; They are really just a thin wrapper to call the matcher.
-;; all the "heavy lifting" is done inside the matcher procedure
+;; They are really just a thin wrapper to call the verifier
+;; all the "heavy lifting" is done inside the verifier procedure
 (define-syntax verify
   (syntax-rules ()
     ((_ expr)
-     (verify expr (boolean-matcher)))
-    ((_ expr (matcher-name matcher-args+ ...))
-     (let ((matcher (matcher-name  matcher-args+ ...)))
-       (run-matcher (quote expr) (delay expr) #f matcher)))
-    ((_ expr matcher-name matcher-args+ ...)
-     (verify expr (matcher-name matcher-args+ ...)))))
+     (verify expr (boolean-verifier)))
+    ((_ expr (verifier-name verifier-args+ ...))
+     (let ((matcher (verifier-name  verifier-args+ ...)))
+       (run-verifier (quote expr) (delay expr) #f verifier)))
+    ((_ expr verifier-name verifier-args+ ...)
+     (verify expr (verifier-name verifier-args+ ...)))))
 
 (define-syntax verify-every
   (syntax-rules ()
@@ -41,12 +41,12 @@
 (define-syntax falsify
   (syntax-rules ()
     ((_ expr)
-     (falsify expr (boolean-matcher)))
-    ((_ expr (matcher-name matcher-args+ ...))
-     (let ((matcher (matcher-name matcher-args+ ...)))
-       (run-matcher  (quote expr) (delay expr) #t matcher)))
-    ((_ expr matcher-name matcher-args+ ...)
-     (falsify expr (matcher-name matcher-args+ ...)))))
+     (falsify expr (boolean-verifier)))
+    ((_ expr (verifier-name verifier-args+ ...))
+     (let ((matcher (verifier-name verifier-args+ ...)))
+       (run-verifier  (quote expr) (delay expr) #t verifier)))
+    ((_ expr verifier-name verifier-args+ ...)
+     (falsify expr (verifier-name verifier-args+ ...)))))
 
 (define-syntax falsify-every
   (syntax-rules ()
@@ -72,22 +72,22 @@
 ;; for example one might to run them in a sandbox
 ;; or in its own thread
 
-(define (run-matcher quoted-expr expr complement? matcher)
-  (let* ((result (matcher complement? quoted-expr expr))
-         (failure-message (if complement? cadr caddr)))
+(define (run-verifier quoted-expr expr complement? verifier)
+  (let ((result (verifier complement? quoted-expr expr))
+        (failure-message (if complement? cadr caddr)))
     (if (not (car result))
         (notify-failure (failure-message result))
         (notify-success quoted-expr))))
 
-;; the matcher protocoll is simple
-;; a matcher i expected to return a procedure that receives three arguments
+;; the verifier protocoll is simple
+;; a verifier i expected to return a procedure that receives three arguments
 ;; 1) complement? - is that in complement context
 ;; 2) quoted-expr - the quoted-expr that shall be checked
 ;; 3) expr        - a promise fore the expression
 
-;; this is the buildin matcher that allows us to run the simplified form
+;; this is the buildin verifier that allows us to run the simplified form
 ;; for verify
-(define ((boolean-matcher . args) complement? quoted-expr expr)
+(define ((boolean-verifier . args) complement? quoted-expr expr)
   (let ((result (if complement? (not (force expr)) (force expr))))
     (if result
         (list #t)
