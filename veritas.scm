@@ -6,7 +6,7 @@
 (define pending? (make-parameter #f))
 (define current-description (make-parameter #f))
 
-;; The base library assumes nothing about outputting/handling  failured or succeeded verifications.
+;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
 
 (define current-failure-notification-receiver (make-parameter (lambda _ #t)))
