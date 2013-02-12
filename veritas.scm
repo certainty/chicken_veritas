@@ -33,10 +33,10 @@
 
 (define-syntax verify-every
   (syntax-rules ()
-    ((_ expr verification more-verifications ...)
+    ((_ expr e e+ ...)
      (begin
-       (verify expr verification)
-       (verify expr more-verifications)) ...)))
+       (verify expr e)
+       (verify expr e+)...))))
 
 (define-syntax falsify
   (syntax-rules ()
@@ -50,16 +50,16 @@
 
 (define-syntax falsify-every
   (syntax-rules ()
-    ((_ expr falsification more-falsifications ...)
+    ((_ expr e e+ ...)
      (begin
-       (verify expr falsification)
-       (verify expr more-falsifications)) ...)))
+       (falsify expr e)
+       (falsify expr e+) ...))))
 
 (define-syntax pending
   (syntax-rules ()
-    ((_ expr more-exprs)
+    ((_ e e+ ...)
      (parameterize ((pending? #t))
-       expr more-exprs ...))))
+       e e+ ...))))
 
 (define-syntax describe
   (syntax-rules ()
