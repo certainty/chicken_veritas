@@ -1,0 +1,17 @@
+(define version "0.20")
+
+(compile -s -d0 -O3 veritas.scm -j veritas)
+(compile -s -d0 -O3 veritas.import.scm)
+
+(compile -s -d0 -O3 veritas-verifiers.scm -j veritas-verifiers)
+(compile -s -d0 -O3 veritas-verifiers.import.scm)
+
+(install-extension
+  'veritas
+  '("veritas.import.so" "veritas.so")
+  `((version ,version)))
+
+(install-extension
+  'veritas-verifiers
+  '("veritas-verifiers.import.so" "veritas-verifiers.so")
+  `((version ,version)))
