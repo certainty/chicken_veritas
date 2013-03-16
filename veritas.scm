@@ -8,11 +8,10 @@
 
 ;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
-
 (define current-failure-notification-receiver (make-parameter (lambda _ #t)))
 (define current-success-notification-receiver (make-parameter (lambda _ #t)))
 
-(define (notify-failure  . args)
+(define (notify-failure . args)
   (apply (current-failure-notification-receiver) args))
 
 (define (notify-success . args)
@@ -26,7 +25,7 @@
     ((_ expr)
      (verify expr (boolean-verifier)))
     ((_ expr (verifier-name verifier-args+ ...))
-     (let ((matcher (verifier-name  verifier-args+ ...)))
+     (let ((verifier (verifier-name  verifier-args+ ...)))
        (run-verifier (quote expr) (delay expr) #f verifier)))
     ((_ expr verifier-name verifier-args+ ...)
      (verify expr (verifier-name verifier-args+ ...)))))
@@ -43,7 +42,7 @@
     ((_ expr)
      (falsify expr (boolean-verifier)))
     ((_ expr (verifier-name verifier-args+ ...))
-     (let ((matcher (verifier-name verifier-args+ ...)))
+     (let ((verifier (verifier-name verifier-args+ ...)))
        (run-verifier  (quote expr) (delay expr) #t verifier)))
     ((_ expr verifier-name verifier-args+ ...)
      (falsify expr (verifier-name verifier-args+ ...)))))
@@ -67,20 +66,35 @@
      (parameterize ((current-description description))
        e e+ ...))))
 
-;; i added that little indirection to have control on
+
+(define-record-type verification-failure
+  (fail expression message)
+  verification-failure?
+  (expression verification-failure-expression)
+  (message verification-failure-message))
+
+(define-record-type verification-success
+  (pass expression)
+  verification-success?
+  (expression verification-success-expression))
+
+;; this little indirection is here to have control over
 ;; how/if tests are run.
 ;; for example one might to run them in a sandbox
 ;; or in its own thread
 
 (define (run-verifier quoted-expr expr complement? verifier)
-  (let ((result (verifier complement? quoted-expr expr))
-        (failure-message (if complement? cadr caddr)))
-    (if (not (car result))
-        (notify-failure (failure-message result))
-        (notify-success quoted-expr))))
+  (let ((result (verifier complement? quoted-expr expr)))
+    (if (verification-failure? result)
+        (notify-failure result)
+        (notify-success result))
+    result))
+
+(define (verification-failure-message complement?)
+  (if complement? cadr caddr))
 
 ;; the verifier protocoll is simple
-;; a verifier i expected to return a procedure that receives three arguments
+;; a verifier is a procedure that returns a procedure of three arguments
 ;; 1) complement? - is that in complement context
 ;; 2) quoted-expr - the quoted-expr that shall be checked
 ;; 3) expr        - a promise fore the expression
@@ -90,5 +104,5 @@
 (define ((boolean-verifier . args) complement? quoted-expr expr)
   (let ((result (if complement? (not (force expr)) (force expr))))
     (if result
-        (list #t)
-        (list #f (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
+        (pass quoted-expr)
+        (fail quoted-expr (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
