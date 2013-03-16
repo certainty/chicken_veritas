@@ -10,7 +10,8 @@
   (syntax-rules ()
     ((_ code ...)
      (parameterize ((current-success-notification-receiver jot-invokation)
-                    (current-failure-notification-receiver jot-invokation))
+                    (current-failure-notification-receiver jot-invokation)
+                    (current-pending-notification-receiver jot-invokation))
        (set! *protocol* (list))
        code ...))))
 
@@ -38,7 +39,19 @@
 
 (test-group "falsify-every")
 
-(test-group "pending")
+(test-group "pending"
+            (test "invokation of pending notifier"
+                  pending:
+                  (with-protocol
+                   (pending
+                    (verify pending:)
+                    (car *protocol*))))
+            (test "it doesn't run the contained tests"
+                  '(#f)
+                  (with-protocol
+                   (pending
+                    (verify #f)
+                    *protocol*))))
 
 (test-group "describe")
 

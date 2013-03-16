@@ -8,14 +8,18 @@
 
 ;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
-(define current-failure-notification-receiver (make-parameter (lambda _ #t)))
-(define current-success-notification-receiver (make-parameter (lambda _ #t)))
+(define current-failure-notification-receiver (make-parameter (constantly #t)))
+(define current-success-notification-receiver (make-parameter (constantly #t)))
+(define current-pending-notification-receiver (make-parameter (constantly #t)))
 
 (define (notify-failure . args)
   (apply (current-failure-notification-receiver) args))
 
 (define (notify-success . args)
   (apply (current-success-notification-receiver) args))
+
+(define (notify-pending . args)
+  (apply (current-pending-notification-receiver) args))
 
 ;; these are the core macros that do the basic dispatch.
 ;; They are really just a thin wrapper to call the verifier
@@ -84,11 +88,13 @@
 ;; or in its own thread
 
 (define (run-verifier quoted-expr expr complement? verifier)
-  (let ((result (verifier complement? quoted-expr expr)))
-    (if (verification-failure? result)
-        (notify-failure result)
-        (notify-success result))
-    result))
+  (if (pending?)
+      (notify-pending quoted-expr)
+      (let ((result (verifier complement? quoted-expr expr)))
+        (if (verification-failure? result)
+            (notify-failure result)
+            (notify-success result))
+        result)))
 
 (define (verification-failure-message complement?)
   (if complement? cadr caddr))
