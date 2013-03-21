@@ -1,5 +1,6 @@
 (use test)
 (load "../veritas")
+(load "../veritas-verifiers")
 
 (define *protocol* (list))
 
@@ -57,4 +58,17 @@
 
 (test-group "tag")
 
-(test-group "verifiers")
+(test-group "verifiers"
+  (test-group "is"
+              (test "with values"
+                    #t
+                    (verification-success? (verify 3 is 3)))
+              (test "with predicate"
+                    #t
+                    (verification-success? (verify 3 is > 2)))
+              (test "with true"
+                    #t
+                    (verification-success? (verify #t is true)))
+              (test "with false"
+                    #t
+                    (verification-success? (verify #f is false)))))
