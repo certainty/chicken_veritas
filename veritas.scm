@@ -90,6 +90,7 @@
 (define (run-verifier quoted-expr expr complement? verifier)
   (if (pending?)
       (notify-pending quoted-expr)
+      (printf "verifier is ~S~%" verifier)
       (let ((result (verifier complement? quoted-expr expr)))
         (if (verification-failure? result)
             (notify-failure result)
@@ -111,4 +112,5 @@
   (let ((result (if complement? (not (force expr)) (force expr))))
     (if result
         (pass quoted-expr)
-        (fail quoted-expr (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
+        (fail quoted-expr
+              (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
