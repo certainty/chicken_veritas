@@ -90,7 +90,6 @@
 (define (run-verifier quoted-expr expr complement? verifier)
   (if (pending?)
       (notify-pending quoted-expr)
-      (printf "verifier is ~S~%" verifier)
       (let ((result (verifier complement? quoted-expr expr)))
         (if (verification-failure? result)
             (notify-failure result)

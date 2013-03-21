@@ -17,10 +17,10 @@
      (is #t))
     ((_ false)
      (is #f))
-    ;; ((_ a type)
-    ;;  (have-type type))
-    ;; ((_ an type)
-    ;;  (have-type type))
+    ((_ a type)
+     (verify-type type))
+    ((_ an type)
+     (verify-type type))
     ((_ pred-or-value)
      (is-verifier pred-or-value))
     ((_ pred value more-values ...)
@@ -53,18 +53,19 @@
                   (sprintf "Expected ~S not to be ~S" value quoted-expr)
                   (sprintf "Expected ~S to be ~S" value quoted-expr))))))
 
-;; (define-syntax have-type
-;;   (lambda (form rename env)
-;;     (let* ((type (cadr form))
-;;            (type-pred (string->symbol (conc (symbol->string type) "?")))
-;;            (%make-matcher (rename 'make-matcher)))
-;;       `(,%make-matcher
-;;         (lambda (subject)
-;;           (,type-pred (force subject)))
-;;         (lambda (form subject negate)
-;;           (if negate
-;;               (sprintf "Expected ~S to not be a ~A" (force subject) (quote ,type))
-;;               (sprintf "Expected ~S to be a ~A" (force subject) (quote ,type))))))))
+(define-syntax verify-type
+  (lambda (form rename env)
+    (let* ((type (cadr form))
+           (type-pred (string->symbol (conc (symbol->string type) "?")))
+           (%type-verifier (rename 'type-verifier)))
+      `(,%type-verifier ,type-pred (quote ,type)))))
+
+(define ((type-verifier type-pred type) complement? quoted-expr expr)
+  (let* ((value (force expr))
+         (result (eval-expr complement? (type-pred value))))
+    (if result
+        (pass quoted-expr)
+        (fail quoted-expr (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
 (define ((close-to what #!key (delta 0.3)) actual)
   (<= (abs (- what actual)) delta))
