@@ -101,6 +101,7 @@
               (test "vector-including negative (no vector)"
                     #t
                     (verification-failure? (verify 2 is (vector-including 2))))
+
               (test "none-of"
                     #t
                     (verification-success? (verify 1 is (none-of 4 5 6))))
