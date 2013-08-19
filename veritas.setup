@@ -6,7 +6,7 @@
 (compile -s -d0 -O3 veritas-verifiers.scm -j veritas-verifiers)
 (compile -s -d0 -O3 veritas-verifiers.import.scm)
 
-(compile -s -d0 -O3 reporters/memory.scm -j veritas-memory-reporter)
+(compile -s -d0 -O3 reporters/memory.scm -j veritas-memory-reporter -o veritas-memory-reporter.so)
 (compile -s -d0 -O3 veritas-memory-reporter.import.scm)
 
 (install-extension
@@ -17,4 +17,10 @@
 (install-extension
   'veritas-verifiers
   '("veritas-verifiers.import.so" "veritas-verifiers.so")
+  `((version ,version)))
+
+
+(install-extension
+  'veritas-memory-reporter
+  '("veritas-memory-reporter.import.so" "veritas-memory-reporter.so")
   `((version ,version)))

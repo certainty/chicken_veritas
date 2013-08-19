@@ -19,11 +19,17 @@
     (set! *failure-notifications* (list))
     (set! *pending-notifications* (list)))
 
-  (define ((make-appender binding) result)
-    (set! binding (cons result binding)))
 
-  (current-success-notification-receiver (make-appender *success-notifications*))
-  (current-failure-notification-receiver (make-appender *failure-notifications*))
-  (current-pending-notification-receiver (make-appender *pending-notifications*))
+  (current-success-notification-receiver
+   (lambda (result)
+     (set! *success-notifications* (cons result *success-notifications*))))
 
-)
+  (current-failure-notification-receiver
+   (lambda (result)
+     (set! *failure-notifications* (cons result *failure-notifications*))))
+
+  (current-pending-notification-receiver
+   (lambda (result)
+     (set! *pending-notifications* (cons result *pending-notifications*))))
+
+  )
