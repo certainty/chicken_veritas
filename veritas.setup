@@ -12,6 +12,9 @@
 (compile -s -d0 -O3 reporters/repl.scm -j veritas-repl-reporter -o veritas-repl-reporter.so)
 (compile -s -d0 -O3 veritas-repl-reporter.import.scm)
 
+(compile -s -d0 -O3 reporters/console.scm -j veritas-console-reporter -o veritas-console-reporter.so)
+(compile -s -d0 -O3 veritas-console-reporter.import.scm)
+
 (install-extension
   'veritas
   '("veritas.import.so" "veritas.so")
@@ -31,4 +34,9 @@
 (install-extension
   'veritas-relp-reporter
   '("veritas-repl-reporter.import.so" "veritas-repl-reporter.so")
+  `((version ,version)))
+
+(install-extension
+  'veritas-console-reporter
+  '("veritas-console-reporter.import.so" "veritas-console-reporter.so")
   `((version ,version)))

@@ -1,7 +1,7 @@
 (module veritas-repl-reporter
   *
-  (import chicken scheme data-structures)
-  (use veritas fmt fmt-color)
+  (import chicken scheme data-structures csi)
+  (use veritas fmt fmt-color )
 
   (define +mode-map+
     `((plain  . ("passed" "failed"))
@@ -23,4 +23,12 @@
   (define-record-printer (verification-failure result out)
     (begin
       (fmt out (fmt-red (fmt-bold (cat (failure-designator) "  "))))
-      (fmt out (fmt-red (verification-failure-message result))))))
+      (fmt out (fmt-red (verification-failure-message result)))))
+
+  (define (verify-toplevel args)
+    (print args))
+
+  (toplevel-command 'v verify-toplevel ",v EXP\tVerify expression")
+
+
+  )
