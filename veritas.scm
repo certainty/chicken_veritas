@@ -1,6 +1,13 @@
 (module veritas
   *
-  (import chicken scheme data-structures)
+  (import chicken scheme data-structures extras)
+
+(define-record verification-failure expression message)
+(define fail make-verification-failure)
+
+(define-record verification-success expression)
+(define pass make-verification-success)
+
 
 (define pending? (make-parameter #f))
 (define current-description (make-parameter #f))
@@ -69,18 +76,6 @@
      (parameterize ((current-description description))
        e e+ ...))))
 
-
-(define-record-type verification-failure
-  (fail expression message)
-  verification-failure?
-  (expression verification-failure-expression)
-  (message verification-failure-message))
-
-(define-record-type verification-success
-  (pass expression)
-  verification-success?
-  (expression verification-success-expression))
-
 ;; this little indirection is here to have control over
 ;; how/if tests are run.
 ;; for example one might to run them in a sandbox
@@ -95,17 +90,14 @@
             (notify-success result))
         result)))
 
-(define (verification-failure-message complement?)
-  (if complement? cadr caddr))
+;; ;; the verifier protocoll is simple
+;; ;; a verifier is a procedure that returns a procedure of three arguments
+;; ;; 1) complement? - is that in complement context
+;; ;; 2) quoted-expr - the quoted-expr that shall be checked
+;; ;; 3) expr        - a promise fore the expression
 
-;; the verifier protocoll is simple
-;; a verifier is a procedure that returns a procedure of three arguments
-;; 1) complement? - is that in complement context
-;; 2) quoted-expr - the quoted-expr that shall be checked
-;; 3) expr        - a promise fore the expression
-
-;; this is the buildin verifier that allows us to run the simplified form
-;; for verify
+;; ;; this is the builtin verifier that allows us to run the simplified form
+;; ;; for verify
 (define ((boolean-verifier . args) complement? quoted-expr expr)
   (let ((result (if complement? (not (force expr)) (force expr))))
     (if result

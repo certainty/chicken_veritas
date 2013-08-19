@@ -32,4 +32,4 @@
    (lambda (result)
      (set! *pending-notifications* (cons result *pending-notifications*))))
 
-  )
+)

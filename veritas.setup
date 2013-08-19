@@ -9,6 +9,9 @@
 (compile -s -d0 -O3 reporters/memory.scm -j veritas-memory-reporter -o veritas-memory-reporter.so)
 (compile -s -d0 -O3 veritas-memory-reporter.import.scm)
 
+(compile -s -d0 -O3 reporters/repl.scm -j veritas-repl-reporter -o veritas-repl-reporter.so)
+(compile -s -d0 -O3 veritas-repl-reporter.import.scm)
+
 (install-extension
   'veritas
   '("veritas.import.so" "veritas.so")
@@ -23,4 +26,9 @@
 (install-extension
   'veritas-memory-reporter
   '("veritas-memory-reporter.import.so" "veritas-memory-reporter.so")
+  `((version ,version)))
+
+(install-extension
+  'veritas-relp-reporter
+  '("veritas-repl-reporter.import.so" "veritas-repl-reporter.so")
   `((version ,version)))
