@@ -53,7 +53,7 @@
   (let* ((value (force expr))
          (result (eval-expr complement? (apply pred value values))))
     (if result
-        (pass expr)
+        (pass quoted-expr)
         (fail quoted-expr
               (if complement?
                   (sprintf "Expected ~S not to be ~S" value quoted-expr)

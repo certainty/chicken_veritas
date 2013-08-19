@@ -36,14 +36,14 @@
      (verify expr (boolean-verifier)))
     ((_ expr (verifier-name verifier-args+ ...))
      (let ((verifier (verifier-name  verifier-args+ ...)))
-       (run-verifier (quote expr) (delay expr) #f verifier)))
+       (run-verifier (quote (verify expr (verifier-name verifier-args+ ...))) (delay expr) #f verifier)))
     ((_ expr verifier-name verifier-args+ ...)
-     (verify expr (verifier-name verifier-args+ ...)))))
+     (verify  expr (verifier-name verifier-args+ ...)))))
 
 (define-syntax verify-every
   (syntax-rules ()
     ((_ expr e e+ ...)
-     (begin
+     (list
        (verify expr e)
        (verify expr e+)...))))
 
@@ -53,16 +53,16 @@
      (falsify expr (boolean-verifier)))
     ((_ expr (verifier-name verifier-args+ ...))
      (let ((verifier (verifier-name verifier-args+ ...)))
-       (run-verifier  (quote expr) (delay expr) #t verifier)))
+       (run-verifier (quote (falsify expr (verifier-name verifier-args+ ...))) (delay expr) #t verifier)))
     ((_ expr verifier-name verifier-args+ ...)
      (falsify expr (verifier-name verifier-args+ ...)))))
 
 (define-syntax falsify-every
   (syntax-rules ()
     ((_ expr e e+ ...)
-     (begin
-       (falsify expr e)
-       (falsify expr e+) ...))))
+     (list
+      (falsify expr e)
+      (falsify expr e+) ...))))
 
 (define-syntax pending
   (syntax-rules ()
