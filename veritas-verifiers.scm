@@ -88,7 +88,11 @@
   (and (list? subject)
        (every (cut member <> subject) (cons item more-items))))
 
-(define ((vector-including item . more-items) subject) #t)
+(define ((vector-including . args) subject)
+  (and (vector? subject)
+       (let ((subject (vector->list subject)))
+         (every (cut member <> subject) args))))
+
 (define ((hash-table-including item . more-items) subject) #t)
 
 )
