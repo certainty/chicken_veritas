@@ -32,8 +32,6 @@
     (newline)
     (flush-output))
 
-  (define (report-heading) #t)
-
   (define (report-success result)
     (update-statistics 'success)
     (if (current-description)

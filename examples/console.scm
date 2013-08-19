@@ -5,6 +5,8 @@
              (is a number)
              (is > 0))
 
-(falsify 4 is 5)
+(describe "it is 5"
+  (falsify 4 is 5))
+
 (pending
   (verify 3 is 2))
