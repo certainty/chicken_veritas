@@ -1,6 +1,5 @@
-(use test)
-(load "../veritas")
-(load "../veritas-verifiers")
+(use test veritas veritas-verifiers veritas-memory-reporter)
+
 
 (define *protocol* (list))
 
@@ -16,25 +15,36 @@
        (set! *protocol* (list))
        code ...))))
 
+(define-syntax with-protocol*
+  (syntax-rules ()
+    ((_ code ...)
+     (begin
+       (reset-memory-reporter!)
+       code ...))))
+
+
 (test-group "verify"
-  (test "invokation of success notifier" #t
-    (with-protocol
-      (verify #t)
-      (verification-success? (car *protocol*))))
+  (test "invokation of success notifier"
+        #t
+        (with-protocol*
+          (verify #t)
+          (verification-success? (car *success-notifications*))))
+
   (test "invokation of failure notifier" #t
-    (with-protocol
+    (with-protocol*
       (verify #f)
-      (verification-failure? (car *protocol*)))))
+      (verification-failure? (car *failure-notifications*)))))
 
 (test-group "falsify"
   (test "invokation of failure notifier" #t
-    (with-protocol
+    (with-protocol*
       (falsify #t)
-      (verification-failure? (car *protocol*))))
+      (verification-failure? (car *failure-notifications*))))
+
   (test "invokation of success notifier" #t
-    (with-protocol
+    (with-protocol*
       (falsify #f)
-      (verification-success? (car *protocol*)))))
+      (verification-success? (car *success-notifications*)))))
 
 (test-group "verify-every")
 
@@ -43,16 +53,16 @@
 (test-group "pending"
             (test "invokation of pending notifier"
                   pending:
-                  (with-protocol
+                  (with-protocol*
                    (pending
                     (verify pending:)
-                    (car *protocol*))))
+                    (car *pending-notifications*))))
             (test "it doesn't run the contained tests"
-                  '(#f)
-                  (with-protocol
+                  '()
+                  (with-protocol*
                    (pending
-                    (verify #f)
-                    *protocol*))))
+                    (verify (error "test"))
+                    *success-notifications*))))
 
 (test-group "describe")
 
@@ -71,4 +81,25 @@
                     (verification-success? (verify #t is true)))
               (test "with false"
                     #t
-                    (verification-success? (verify #f is false)))))
+                    (verification-success? (verify #f is false)))
+              (test "list-including"
+                    #t
+                    (verification-success? (verify (list 1 2) is (list-including 2))))
+              (test "list-including negative"
+                    #t
+                    (verification-failure? (verify (list 1 2) is (list-including 0))))
+              (test "list-including negative (no list)"
+                    #t
+                    (verification-failure? (verify 2 is (list-including 2))))
+              (test "none-of"
+                    #t
+                    (verification-success? (verify 1 is (none-of 4 5 6))))
+              (test "none-of negative"
+                    #t
+                    (verification-failure? (verify 1 is (none-of 1 5 6))))
+              (test "any-of"
+                    #t
+                    (verification-success? (verify 1 is (any-of 1 2 3))))
+              (test "any-of negative"
+                    #t
+                    (verification-failure? (verify 1 is (any-of 0))))))
