@@ -1,3 +1,9 @@
+(module veritas-verifiers
+  *
+  (import chicken scheme data-structures extras ports)
+  (use veritas srfi-1)
+
+
 (define (eval-expr complement? expr)
   ((if complement? not identity) expr))
 
@@ -70,6 +76,8 @@
 (define ((close-to what #!key (delta 0.3)) actual)
   (<= (abs (- what actual)) delta))
 
+(define roughly close-to)
+
 (define ((any-of item . more-items) subject)
   (member subject (cons item more-items)))
 
@@ -82,6 +90,8 @@
 
 (define ((vector-including item . more-items) subject) #t)
 (define ((hash-table-including item . more-items) subject) #t)
+
+)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; Have/Has

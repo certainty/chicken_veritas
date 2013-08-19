@@ -1,7 +1,6 @@
-;; This is the new implementation of missbehave. It is a heavily simplified version of the original code.
-;; For the reasons on why i implemented it please refer to:
-;; {{link_to_blogpost}
-
+(module veritas
+  *
+  (import chicken scheme data-structures)
 
 (define pending? (make-parameter #f))
 (define current-description (make-parameter #f))
@@ -113,3 +112,5 @@
         (pass quoted-expr)
         (fail quoted-expr
               (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
+
+)
