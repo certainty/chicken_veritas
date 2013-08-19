@@ -1,5 +1,5 @@
 (module veritas-console-reporter
-  *
+  ()
   (import chicken scheme extras)
   (use veritas fmt fmt-color posix)
 
