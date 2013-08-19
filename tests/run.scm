@@ -91,6 +91,16 @@
               (test "list-including negative (no list)"
                     #t
                     (verification-failure? (verify 2 is (list-including 2))))
+
+              (test "vector-including"
+                    #t
+                    (verification-success? (verify (vector 1 2) is (vector-including 2))))
+              (test "vector-including negative"
+                    #t
+                    (verification-failure? (verify (vector 1 2) is (vector-including 0))))
+              (test "vector-including negative (no vector)"
+                    #t
+                    (verification-failure? (verify 2 is (vector-including 2))))
               (test "none-of"
                     #t
                     (verification-success? (verify 1 is (none-of 4 5 6))))
