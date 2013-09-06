@@ -51,12 +51,12 @@
 (test-group "falsify-every")
 
 (test-group "pending"
-            (test "invokation of pending notifier"
-                  pending:
-                  (with-protocol*
-                   (pending
-                    (verify pending:)
-                    (car *pending-notifications*))))
+;            (test "invokation of pending notifier"
+;                  pending:
+;                  (with-protocol*
+;                   (pending
+;                    (verify pending:)
+;                    (car *pending-notifications*))))
             (test "it doesn't run the contained tests"
                   '()
                   (with-protocol*

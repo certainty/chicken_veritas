@@ -74,7 +74,15 @@
         (fail quoted-expr (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
 (define ((close-to what #!key (delta 0.3)) actual)
-  (<= (abs (- what actual)) delta))
+  (define (approx-equal? a b delta)
+    (cond
+     ((> (abs a) (abs b))
+      (approx-equal? b a delta))
+     ((zero? b)
+      (< (abs a) epsilon))
+     (else
+      (< (abs (/ (- a b) b)) delta))))
+  (approx-equal? what actual delta))
 
 (define roughly close-to)
 
