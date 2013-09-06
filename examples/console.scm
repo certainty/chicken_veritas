@@ -1,4 +1,4 @@
-(use veritas veritas-verifiers veritas-console-reporter fmt fmt-color)
+(use veritas veritas-verifiers)
 
 
 (let ((the-pair (cons 1 2)))
