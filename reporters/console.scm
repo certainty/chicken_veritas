@@ -21,16 +21,16 @@
 
   (define (report-summary)
     (if (reporter-use-colors?)
-        (report-summary-with-colors)
-        (report-summary-without-colors)))
+        (report-summary/colors)
+        (report-summary/nocolors)))
 
-  (define (report-summary-without-colors)
+  (define (report-summary/colors)
     (newline)
     (printf "Total: ~a Passed: ~a Pending: ~a Failed: ~a" total-count success-count pending-count failure-count)
     (newline)
     (flush-output))
 
-  (define (report-summary-with-colors)
+  (define (report-summary/nocolors)
     (newline)
     (fmt #t (cat
              (fmt-bold (cat "Total: " total-count))
