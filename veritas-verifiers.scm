@@ -79,7 +79,7 @@
      ((> (abs a) (abs b))
       (approx-equal? b a delta))
      ((zero? b)
-      (< (abs a) epsilon))
+      (< (abs a) delta))
      (else
       (< (abs (/ (- a b) b)) delta))))
   (approx-equal? what actual delta))
