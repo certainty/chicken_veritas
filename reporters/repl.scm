@@ -5,8 +5,8 @@
 
   (define +mode-map+
     `((plain  . ("passed" "failed"))
+      (short   . ("P" "F"))
       (default . ("✔" "✘"))
-      (hearts . ("♥" "♥"))
       (smileys . ("☺" "☹"))))
 
   (define current-reporting-designators (make-parameter'default))
@@ -19,25 +19,25 @@
 
   (define (print-success result out)
     (if (reporter-use-colors?)
-        (print-success-with-colors result out)
-        (print-success-without-colors result out)))
+        (print-success/colors result out)
+        (print-success/nocolors result out)))
 
   (define (print-failure result out)
     (if (reporter-use-colors?)
-        (print-failure-with-colors result out)
-        (print-failure-without-colors result out)))
+        (print-failure/colors result out)
+        (print-failure/nocolors result out)))
 
-  (define (print-success-with-colors result out)
+  (define (print-success/colors result out)
     (fmt out (fmt-green (fmt-bold (cat (success-designator) "  ")))))
 
-  (define (print-success-without-colors result out)
+  (define (print-success/nocolors result out)
     (display (conc (success-designator) "  ") out))
 
-  (define (print-failure-with-colors result out)
+  (define (print-failure/colors result out)
     (fmt out (fmt-red (fmt-bold (cat (failure-designator) "  "))))
     (fmt out (fmt-red (verification-failure-message result))))
 
-  (define (print-failure-without-colors result out)
+  (define (print-failure/nocolors result out)
     (display (conc (failure-designator) "  ") out)
     (display (verification-failure-message result) out))
 
