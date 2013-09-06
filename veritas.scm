@@ -103,6 +103,6 @@
     (if result
         (pass quoted-expr)
         (fail quoted-expr
-              (if complement? (sprintf "Expected ~S not to hold" quoted-expr) (sprintf "Expected ~S to hold" quoted-expr))))))
+              (if complement? (sprintf "Expected ~S not to hold" (cadr quoted-expr)) (sprintf "Expected ~S to hold" (cadr quoted-expr)))))))
 
 )
