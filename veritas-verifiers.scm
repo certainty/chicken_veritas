@@ -1,6 +1,6 @@
 (module veritas-verifiers
   *
-  (import chicken scheme data-structures extras ports)
+  (import chicken scheme data-structures extras ports srfi-69)
   (use veritas srfi-1)
 
 
@@ -32,6 +32,21 @@
     ((_ pred value more-values ...)
      (is-verifier/predicate pred (list value more-values ...)))))
 
+(define (is-equal? a b)
+  (or (equal? a b)
+      (and (number? a)
+           (inexact? a)
+           (inexact? b)
+           (approx-equal? a b))))
+
+(define (approx-equal? a b delta)
+  (cond
+   ((> (abs a) (abs b))
+    (approx-equal? b a delta))
+   ((zero? b)
+    (< (abs a) delta))
+   (else
+    (< (abs (/ (- a b) b)) delta))))
 
 (define ((is-verifier pred-or-value) complement? quoted-expr expr)
   (let* ((value (force expr))
@@ -40,7 +55,7 @@
            complement?
            (if (procedure? pred-or-value)
                (pred-or-value value)
-               (equal? pred-or-value value)))))
+               (is-equal? pred-or-value value)))))
     (if result
         (pass quoted-expr)
         (cond
@@ -74,14 +89,6 @@
         (fail quoted-expr (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
 (define ((close-to what #!key (delta 0.3)) actual)
-  (define (approx-equal? a b delta)
-    (cond
-     ((> (abs a) (abs b))
-      (approx-equal? b a delta))
-     ((zero? b)
-      (< (abs a) delta))
-     (else
-      (< (abs (/ (- a b) b)) delta))))
   (approx-equal? what actual delta))
 
 (define roughly close-to)
@@ -101,7 +108,11 @@
        (let ((subject (vector->list subject)))
          (every (cut member <> subject) args))))
 
-(define ((hash-table-including item . more-items) subject) #t)
+(define ((hash-table-including . args) subject)
+  (and (hash-table? subject)
+       (every (lambda (pair)
+                (equal? (cdr pair) (hash-table-ref subject (car pair))))
+              args)))
 
 )
 
