@@ -18,6 +18,18 @@
 (define current-success-notification-receiver (make-parameter (constantly #t)))
 (define current-pending-notification-receiver (make-parameter (constantly #t)))
 
+;; support procedures for reporter
+(define reporter-use-colors?
+  (make-parameter
+   (cond
+    ((get-environment-variable "VERITAS_USE_COLORS")
+     => (lambda (s) (not (equal? s "0"))))
+    (else
+     (and (##sys#tty-port? (current-output-port))
+          (member (get-environment-variable "TERM")
+                  '("xterm" "xterm-color" "xterm-256color" "rxvt" "kterm"
+                    "linux" "screen" "screen-256color" "vt100")))))))
+
 (define (notify-failure . args)
   (apply (current-failure-notification-receiver) args))
 
