@@ -1,21 +1,7 @@
 (module veritas-repl-reporter
   *
   (import chicken scheme data-structures csi)
-  (use veritas fmt fmt-color )
-
-  (define +mode-map+
-    `((plain  . ("passed" "failed"))
-      (short   . ("P" "F"))
-      (default . ("✔" "✘"))
-      (smileys . ("☺" "☹"))))
-
-  (define current-reporting-designators (make-parameter'default))
-
-  (define (success-designator)
-    (car (alist-ref (current-reporting-designators) +mode-map+)))
-
-  (define (failure-designator)
-    (cadr (alist-ref (current-reporting-designators) +mode-map+)))
+  (use veritas veritas-base-reporter fmt fmt-color)
 
   (define (print-success result out)
     (if (reporter-use-colors?)
@@ -46,12 +32,4 @@
 
   (define-record-printer (verification-failure result out)
     (print-failure result out))
-
-  (define (verify-toplevel)
-    (let ((content (read)))
-      (eval `(begin (display (verify ,@content)) (newline)))))
-
-  (toplevel-command 'v verify-toplevel ",v EXP\tVerify expression")
-
-
   )

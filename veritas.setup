@@ -6,6 +6,9 @@
 (compile -s -d0 -O3 veritas-verifiers.scm -j veritas-verifiers)
 (compile -s -d0 -O3 veritas-verifiers.import.scm)
 
+(compile -s -d0 -O3 reporters/base.scm -j veritas-base-reporter -o veritas-base-reporter.so)
+(compile -s -d0 -O3 veritas-base-reporter.import.scm)
+
 (compile -s -d0 -O3 reporters/memory.scm -j veritas-memory-reporter -o veritas-memory-reporter.so)
 (compile -s -d0 -O3 veritas-memory-reporter.import.scm)
 
@@ -14,6 +17,9 @@
 
 (compile -s -d0 -O3 reporters/console.scm -j veritas-console-reporter -o veritas-console-reporter.so)
 (compile -s -d0 -O3 veritas-console-reporter.import.scm)
+
+(compile -s -d0 -O3 veritas-repl -j veritas-repl -o veritas-repl.so)
+(compile -s -d0 -O3 veritas-repl.import.scm)
 
 (install-extension
   'veritas
@@ -39,4 +45,9 @@
 (install-extension
   'veritas-console-reporter
   '("veritas-console-reporter.import.so" "veritas-console-reporter.so")
+  `((version ,version)))
+
+(install-extension
+  'veritas-repl
+  '("veritas-repl.import.so" "veritas-repl.so")
   `((version ,version)))

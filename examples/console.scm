@@ -1,5 +1,4 @@
-(use veritas veritas-verifiers)
-
+(use veritas veritas-verifiers veritas-console-reporter)
 
 (let ((the-pair (cons 1 2)))
   (verify the-pair (is '(1 . 2)))
@@ -11,7 +10,6 @@
   (verify the-list (is list-including 2))
   (verify (equal? (list 3 2 1) (reverse the-list))))
 
-
 (verify #t is true)
 
 (verify-every 3
@@ -20,7 +18,7 @@
   (is < 4))
 
 (describe "it is 5"
-  (verify 4 is 5))
+  (verify 5 is 5))
 
 (pending
   (verify 3 is 2))

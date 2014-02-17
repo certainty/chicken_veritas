@@ -1,16 +1,21 @@
 (module veritas-console-reporter
   ()
   (import chicken scheme extras)
-  (use veritas fmt fmt-color posix (only data-structures conc))
+  (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc))
 
   (define failure-count 0)
   (define success-count 0)
   (define pending-count 0)
   (define total-count   0)
 
+  (define reporter-summary-on-exit   (make-parameter #t))
+  (define reporter-failure-exit-code (make-parameter 1))
+  (define reporter-success-exit-code (make-parameter 0))
+
   (on-exit (lambda ()
-             (report-summary)
-             (_exit (if (zero? failure-count) 0 1))))
+             (when (reporter-summary-on-exit)
+               (report-summary))
+             (_exit (if (zero? failure-count) (reporter-success-exit-code) (reporter-failure-exit-code)))))
 
   (define (update-statistics what)
     (case what
