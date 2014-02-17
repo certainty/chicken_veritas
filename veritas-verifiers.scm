@@ -3,7 +3,6 @@
   (import chicken scheme data-structures extras ports srfi-69)
   (use veritas srfi-1)
 
-
 (define (eval-expr complement? expr)
   ((if complement? not identity) expr))
 
@@ -39,14 +38,16 @@
            (inexact? b)
            (approx-equal? a b))))
 
-(define (approx-equal? a b delta)
+(define current-equality-epsilon (make-parameter 1e-5))
+
+(define (approx-equal? a b  #!optional (epsilon (current-equality-epsilon)))
   (cond
    ((> (abs a) (abs b))
-    (approx-equal? b a delta))
+    (approx-equal? b a epsilon))
    ((zero? b)
-    (< (abs a) delta))
+    (< (abs a) epsilon))
    (else
-    (< (abs (/ (- a b) b)) delta))))
+    (< (abs (/ (- a b) b)) epsilon))))
 
 (define ((is-verifier pred-or-value) complement? quoted-expr expr)
   (let* ((value (force expr))

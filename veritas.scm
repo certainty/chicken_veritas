@@ -90,7 +90,7 @@
 
 ;; this little indirection is here to have control over
 ;; how/if tests are run.
-;; for example one might to run them in a sandbox
+;; for example one might want to run them in a sandbox
 ;; or in its own thread
 
 (define (run-verifier quoted-expr expr complement? verifier)
@@ -102,7 +102,7 @@
             (notify-success result))
         result)))
 
-;; ;; the verifier protocoll is simple
+;; ;; the verifier protocol is simple
 ;; ;; a verifier is a procedure that returns a procedure of three arguments
 ;; ;; 1) complement? - is that in complement context
 ;; ;; 2) quoted-expr - the quoted-expr that shall be checked
