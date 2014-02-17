@@ -14,17 +14,17 @@
         (print-failure/nocolors result out)))
 
   (define (print-success/colors result out)
-    (fmt out (fmt-green (fmt-bold (cat (success-designator) "  ")))))
+    (fmt out (fmt-green (fmt-bold (cat (current-success-designator) "  ")))))
 
   (define (print-success/nocolors result out)
-    (display (conc (success-designator) "  ") out))
+    (display (conc (current-success-designator) "  ") out))
 
   (define (print-failure/colors result out)
-    (fmt out (fmt-red (fmt-bold (cat (failure-designator) "  "))))
+    (fmt out (fmt-red (fmt-bold (cat (current-failure-designator) "  "))))
     (fmt out (fmt-red (verification-failure-message result))))
 
   (define (print-failure/nocolors result out)
-    (display (conc (failure-designator) "  ") out)
+    (display (conc (current-failure-designator) "  ") out)
     (display (verification-failure-message result) out))
 
   (define-record-printer (verification-success result out)
