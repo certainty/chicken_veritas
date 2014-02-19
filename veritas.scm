@@ -104,6 +104,21 @@
            (falsify ,expr ,verifier)))
        (else (syntax-error 'falsify "Invalid syntax"))))))
 
+
+(define-syntax verify-every
+  (syntax-rules ()
+    ((_ expr e e+ ...)
+     (list
+       (verify expr e)
+       (verify expr e+) ...))))
+
+(define-syntax falsify-every
+  (syntax-rules ()
+    ((_ expr e e+ ...)
+     (list
+      (falsify expr e)
+      (falsify expr e+) ...))))
+
 (define-syntax pending
   (syntax-rules ()
     ((_ body0 ...)
