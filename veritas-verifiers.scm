@@ -49,8 +49,11 @@
    (else
     (< (abs (/ (- a b) b)) epsilon))))
 
-(define ((is-verifier pred-or-value) complement? quoted-expr expr)
-  (let* ((value (force expr))
+(define ((is-verifier pred-or-value) subject complement?)
+
+  (let* ((quoted-expr (verification-subject-quoted-expression subject))
+         (expr        (verification-subject-expression-promise subject))
+         (value (force expr))
          (result
           (eval-expr
            complement?
@@ -58,19 +61,21 @@
                (pred-or-value value)
                (is-equal? pred-or-value value)))))
     (if result
-        (pass quoted-expr)
+        (pass subject)
         (cond
          ((procedure? pred-or-value)
-          (fail quoted-expr (sprintf "Expected ~S ~A be ~A" value (if complement? "not to" "to") (message-from-predicate-form quoted-expr))))
+          (fail subject (sprintf "Expected ~S ~A be ~A" value (if complement? "not to" "to") (message-from-predicate-form quoted-expr))))
          (else
-          (fail quoted-expr (sprintf "Expected ~S ~A be ~S" value (if complement? "not to" "to") pred-or-value)))))))
+          (fail subject (sprintf "Expected ~S ~A be ~S" value (if complement? "not to" "to") pred-or-value)))))))
 
-(define ((is-verifier/predicate pred values) complement? quoted-expr expr)
-  (let* ((value (force expr))
+(define ((is-verifier/predicate pred values) subject complement?)
+  (let* ((quoted-expr (verification-subject-quoted-expression subject))
+         (expr (verification-subject-expression-promise subject))
+         (value (force expr))
          (result (eval-expr complement? (apply pred value values))))
     (if result
-        (pass quoted-expr)
-        (fail quoted-expr
+        (pass subject)
+        (fail subject
               (if complement?
                   (sprintf "Expected ~S not to be ~S" value quoted-expr)
                   (sprintf "Expected ~S to be ~S" value quoted-expr))))))
@@ -82,12 +87,14 @@
            (%type-verifier (rename 'type-verifier)))
       `(,%type-verifier ,type-pred (quote ,type)))))
 
-(define ((type-verifier type-pred type) complement? quoted-expr expr)
-  (let* ((value (force expr))
+(define ((type-verifier type-pred type) subject complement?)
+  (let* ((quoted-expr (verification-subject-quoted-expression))
+         (expr        (verification-subject-expression-promise subject))
+         (value (force expr))
          (result (eval-expr complement? (type-pred value))))
     (if result
-        (pass quoted-expr)
-        (fail quoted-expr (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
+        (pass subject)
+        (fail subject (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
 (define ((close-to what #!key (delta 0.3)) actual)
   (approx-equal? what actual delta))

@@ -3,6 +3,11 @@
   (import chicken scheme data-structures csi)
   (use veritas veritas-base-reporter fmt fmt-color)
 
+  (define (ignored . _) (void))
+  (current-failure-notification-receiver ignored)
+  (current-success-notification-receiver ignored)
+  (current-pending-notification-receiver ignored)
+
   (define (print-success result out)
     (if (reporter-use-colors?)
         (print-success/colors result out)
@@ -31,5 +36,4 @@
     (print-success result out))
 
   (define-record-printer (verification-failure result out)
-    (print-failure result out))
-  )
+    (print-failure result out)))

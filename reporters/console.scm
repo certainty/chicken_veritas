@@ -58,14 +58,16 @@
     (update-statistics 'success)
     (if (current-description)
         (fmt #t (fmt-green (cat (current-success-designator) " " (current-description))))
-        (fmt #t (fmt-green (cat (current-success-designator) " " (verification-success-expression result)))))
+        (fmt #t (fmt-green (cat (current-success-designator) " " (verification-subject-quoted-expression
+                                                                  (verification-success-subject result))))))
     (newline))
 
   (define (report-success/nocolors result)
     (update-statistics 'success)
     (if (current-description)
         (print (conc (current-success-designator) " " (current-description)))
-        (print (conc (current-success-designator) " " (verification-success-expression result)))))
+        (print (conc (current-success-designator) " " (verification-subject-quoted-expression
+                                                       (verification-success-subject result))))))
 
   (define (report-failure result)
     (if (reporter-use-colors?)
@@ -76,7 +78,8 @@
     (update-statistics 'failure)
     (if (current-description)
         (fmt #t (fmt-red (cat (current-failure-designator) " "  (current-description))))
-        (fmt #t (fmt-red (cat (current-failure-designator) " " (verification-failure-expression result)))))
+        (fmt #t (fmt-red (cat (current-failure-designator) " " (verification-subject-quoted-expression
+                                                                (verification-failure-subject result))))))
     (newline)
     (fmt #t (cat "  " (fmt-red (verification-failure-message result))))
     (newline))
@@ -85,7 +88,8 @@
     (update-statistics 'failure)
     (if (current-description)
         (print (conc (current-failure-designator) " "  (current-description)))
-        (print (conc (current-failure-designator) " " (verification-failure-expression result))))
+        (print (conc (current-failure-designator) " "  (verification-subject-quoted-expression
+                                                        (verification-failure-subject result)))))
     (print (conc "  " (verification-failure-message result))))
 
   (define (report-pending expr)
