@@ -54,20 +54,27 @@
         (report-success/colors result)
         (report-success/nocolors result)))
 
+  (define (pretty-print-expression expr)
+    (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
+        `(,(car expr) ,(cadr expr))
+        expr))
+
   (define (report-success/colors result)
     (update-statistics 'success)
-    (if (current-description)
-        (fmt #t (fmt-green (cat (current-success-designator) " " (current-description))))
-        (fmt #t (fmt-green (cat (current-success-designator) " " (verification-subject-quoted-expression
-                                                                  (verification-success-subject result))))))
-    (newline))
+    (let ((description (or (meta-data-get (verification-success-subject result) 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression
+                             (verification-success-subject result))))))
+      (fmt #t (fmt-green (cat (current-success-designator) " " description)))
+      (newline)))
 
   (define (report-success/nocolors result)
     (update-statistics 'success)
-    (if (current-description)
-        (print (conc (current-success-designator) " " (current-description)))
-        (print (conc (current-success-designator) " " (verification-subject-quoted-expression
-                                                       (verification-success-subject result))))))
+    (let ((description (or (meta-data-get (verification-success-subject result) 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression
+                             (verification-success-subject result))))))
+      (print (conc (current-success-designator) " " (current-description)))))
 
   (define (report-failure result)
     (if (reporter-use-colors?)
@@ -76,39 +83,43 @@
 
   (define (report-failure/colors result)
     (update-statistics 'failure)
-    (if (current-description)
-        (fmt #t (fmt-red (cat (current-failure-designator) " "  (current-description))))
-        (fmt #t (fmt-red (cat (current-failure-designator) " " (verification-subject-quoted-expression
-                                                                (verification-failure-subject result))))))
-    (newline)
-    (fmt #t (cat "  " (fmt-red (verification-failure-message result))))
-    (newline))
+    (let ((description (or (meta-data-get (verification-failure-subject result) 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression
+                             (verification-failure-subject result))))))
+      (fmt #t (fmt-red (cat (current-success-designator) " " description)))
+      (newline)
+      (fmt #t (cat "  " (fmt-red (verification-failure-message result))))
+      (newline)))
 
   (define (report-failure/nocolors result)
     (update-statistics 'failure)
-    (if (current-description)
-        (print (conc (current-failure-designator) " "  (current-description)))
-        (print (conc (current-failure-designator) " "  (verification-subject-quoted-expression
-                                                        (verification-failure-subject result)))))
-    (print (conc "  " (verification-failure-message result))))
+    (let ((description (or (meta-data-get (verification-failure-subject result) 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression
+                             (verification-failure-subject result))))))
+      (print (conc (current-failure-designator) " "  description))
+      (print (conc "  " (verification-failure-message result)))))
 
-  (define (report-pending expr)
+  (define (report-pending subj)
     (if (reporter-use-colors?)
-        (report-pending/colors expr)
-        (report-pending/nocolors expr)))
+        (report-pending/colors subj)
+        (report-pending/nocolors subj)))
 
-  (define (report-pending/colors expr)
+  (define (report-pending/colors subj)
     (update-statistics 'pending)
-    (if (current-description)
-        (fmt #t (fmt-yellow (cat (current-pending-designator) " " (current-description))))
-        (fmt #t (fmt-yellow (cat (current-pending-designator) " " expr))))
-    (newline))
+    (let ((description (or (meta-data-get subj 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression subj)))))
+      (fmt #t (fmt-yellow (cat (current-pending-designator) " " description)))
+      (newline)))
 
-  (define (report-pending/nocolors expr)
+  (define (report-pending/nocolors subj)
     (update-statistics 'pending)
-    (if (current-description)
-        (print (conc (current-pending-designator) " " (current-description)))
-        (print (conc (current-pending-designator) " " expr))))
+    (let ((description (or (meta-data-get subj 'description)
+                           (pretty-print-expression
+                            (verification-subject-quoted-expression subj)))))
+      (print (conc (current-pending-designator) " " description))))
 
   (current-success-notification-receiver report-success)
   (current-failure-notification-receiver report-failure)
