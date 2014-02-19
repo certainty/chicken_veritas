@@ -7,4 +7,4 @@
 
 (verify #t)
 (verify #t "This is a test")
-;(verify (cons 1 2) (is '(1 . 2)))
+(verify (cons 1 2) (is '(1 . 2)))

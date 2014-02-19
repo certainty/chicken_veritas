@@ -61,7 +61,6 @@
 
 
 ;; TODO: find a way to generate both verify and falsify with only one syntax
-
 (define-syntax verify
   (ir-macro-transformer
    (lambda (expr inject compare)
