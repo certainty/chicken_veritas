@@ -1,7 +1,7 @@
 (module veritas
   *
-  (import chicken scheme data-structures extras srfi-1)
-  (require-library matchable)
+  (import chicken scheme data-structures extras srfi-1 kvlists)
+  (require-library matchable kvlists)
   (import-for-syntax matchable)
 
 (define-record verification-subject quoted-expression expression-promise meta-data)
@@ -47,11 +47,20 @@
 (define (merge-alists lhs rhs)
   (fold (lambda (elt ls) (alist-update (car elt) (cdr elt) ls)) lhs rhs))
 
-(define-syntax with-meta-data
+(define (merge-meta-data meta-data)
+  (merge-alists (current-meta-data) (kvlist->alist meta-data)))
+
+(define (meta-data-get subject key)
+  (alist-ref key (verification-subject-meta-data subject)))
+
+(define-syntax meta
   (syntax-rules ()
-    ((_ ((k . v) ...) body0 ...)
-     (parameterize ((current-meta-data (merge-alists (current-meta-data) (quote ((k . v) ...)))))
+    ((_ (k v ...) body0 ...)
+     (parameterize ((current-meta-data (merge-meta-data (quote (k v ...)))))
        body0 ...))))
+
+
+;; TODO: find a way to generate both verify and falsify with only one syntax
 
 (define-syntax verify
   (ir-macro-transformer
@@ -70,7 +79,7 @@
           ,verifier
           #f))
        ((_ expr verifier (? string? description))
-        `(with-meta-data ((description . ,description))
+        `(meta (description: ,description)
            (verify ,expr ,verifier)))
        (else (syntax-error 'verify "Invalid syntax"))))))
 
@@ -92,20 +101,20 @@
           ,verifier
           #t))
        ((_ expr verifier (? string? description))
-        `(with-meta-data ((description . ,description))
+        `(meta (description: ,description)
            (falsify ,expr ,verifier)))
        (else (syntax-error 'falsify "Invalid syntax"))))))
 
 (define-syntax pending
   (syntax-rules ()
-    ((_ e e+ ...)
-     (parameterize ((pending? #t))
-       e e+ ...))))
+    ((_ body0 ...)
+     (meta (pending: #t)
+       body0 ...))))
 
 (define-syntax describe
   (syntax-rules ()
     ((_ description body0 ...)
-     (with-meta-data (('description . description))
+     (meta (description: description)
          body0 ...))))
 
 ;; this little indirection is here to have control over
@@ -113,7 +122,7 @@
 ;; for example one might want to run them in a sandbox
 ;; or in its own thread
 (define (run-verification subject verifier complement?)
-  (if (pending?)
+  (if (meta-data-get subject 'pending)
       (notify-pending subject)
       (let ((result (apply-verifier subject verifier complement?)))
         (if (verification-failure? result)
@@ -129,7 +138,6 @@
 ;; a verifier is a procedure that returns a procedure of two arguments
 ;; 1) subject - the verification subject
 ;; 2) complement? - is that in complement context
-
 (define ((boolean-verifier . args) subject complement?)
   (let* ((expr (verification-subject-expression-promise subject))
          (quoted-expr (verification-subject-quoted-expression subject))
