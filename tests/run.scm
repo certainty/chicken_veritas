@@ -21,28 +21,45 @@
        (reset-memory-reporter!)
        code ...))))
 
+(define-syntax extract-subject
+  (syntax-rules ()
+    ((_ (subject-name verify-exp) body0 ...)
+     (with-protocol* verify-exp
+      ((lambda (subject-name) body0 ...) (verification-success-subject (car  *success-notifications*)))))))
+
+
 (test-group "verify syntax"
-   (test-assert "(verify exp)"
-                (verification-success? (verify #t)))
-   (test-assert "(verify exp \"description\")"
-                (verification-success? (verify #t "test")))
-   (test-assert "(verify exp verifier)"
-                (verification-success? (verify #t (is #t))))
-   (test-assert "(verify exp verifier \"description\") "
-                (verification-success? (verify #t (is #t) "it is true"))))
+  (test-group "(verify exp)"
+     (test "creates subject with correct qouted expression"
+        '(verify #t (boolean-verifier))
+         (extract-subject (subj (verify #t))
+           (verification-subject-quoted-expression subj))))
 
-(test-group "falsify syntax"
-   (test-assert "(falsify exp)"
-                (verification-success? (falsify #f)))
-   (test-assert "(falsify exp \"description\")"
-                (verification-success? (falsify #f "test")))
-   (test-assert "(falsify exp verifier)"
-                (verification-success? (falsify #f (is #t))))
-   (test-assert "(falsify exp verifier \"description\") "
-                (verification-success? (falsify #f (is #t) "it is false"))))
+  (test-group "(verify exp \"description\") "
+     (test "creates subject with correct quoted expression"
+           '(verify #t (boolean-verifier))
+           (extract-subject (subj (verify #t))
+             (verification-subject-quoted-expression subj)))
+     (test "creates subject with description meta data"
+           "test-description"
+           (extract-subject (subj (verify #t "test-description"))
+             (meta-data-get subj 'description))))
 
+  (test-group "(verify exp verifier) "
+     (test "creates subject with correct quoted expression"
+           '(verify #t (is #t))
+           (extract-subject (subj (verify #t (is #t)))
+             (verification-subject-quoted-expression subj))))
 
-
+    (test-group "(verify exp verifier \"description\") "
+     (test "creates subject with correct quoted expression"
+           '(verify #t (is #t))
+           (extract-subject (subj (verify #t (is #t)))
+             (verification-subject-quoted-expression subj)))
+     (test "creates subject with description meta data"
+           "test-description"
+           (extract-subject (subj (verify #t (is #t) "test-description"))
+             (meta-data-get subj 'description)))))
 
 (test-group "reporter protocol"
             (test "invokation of success notifier"

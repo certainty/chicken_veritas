@@ -4,5 +4,5 @@
  (category testing)
  (license "MIT")
  (doc-from-wiki)
- (needs fmt matchable)
+ (needs fmt matchable kvlists)
  (test-depends test))
