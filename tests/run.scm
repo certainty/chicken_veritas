@@ -14,6 +14,12 @@
       ((lambda (subject-name) body0 ...) (verification-success-subject (car  *success-notifications*)))))))
 
 
+(test-group "running verifications"
+  (test "handles errors that bubble up"
+        #t
+        (verification-failure? (verify (error "test")))))
+
+
 (test-group "verify syntax"
   (test-group "(verify exp)"
      (test "creates subject with correct qouted expression"

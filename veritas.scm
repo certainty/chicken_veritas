@@ -121,6 +121,9 @@
 
 (define-syntax pending
   (syntax-rules ()
+    ((_ reason (body0 ...))
+     (meta (pending: reason)
+       (body0 ...)))
     ((_ body0 ...)
      (meta (pending: #t)
        body0 ...))))
@@ -146,7 +149,10 @@
 
 (define (apply-verifier subject verifier complement?)
   ;; add timing and error handling
-  (verifier subject complement?))
+  (condition-case (verifier subject complement?)
+    (e () (condition->verification-failure e))))
+
+(define (condition->verification-failure condition) #t)
 
 ;; the verifier protocol is simple
 ;; a verifier is a procedure that returns a procedure of two arguments
