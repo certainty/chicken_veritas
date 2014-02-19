@@ -108,18 +108,22 @@
 
   (define (report-pending/colors subj)
     (update-statistics 'pending)
-    (let ((description (or (meta-data-get subj 'description)
+    (let* ((description (or (meta-data-get subj 'description)
                            (pretty-print-expression
-                            (verification-subject-quoted-expression subj)))))
-      (fmt #t (fmt-yellow (cat (current-pending-designator) " " description)))
+                            (verification-subject-quoted-expression subj))))
+           (reason (meta-data-get subj 'pending))
+           (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
+      (fmt #t (fmt-yellow (cat (current-pending-designator) reason-str " " description)))
       (newline)))
 
   (define (report-pending/nocolors subj)
     (update-statistics 'pending)
-    (let ((description (or (meta-data-get subj 'description)
+    (let* ((description (or (meta-data-get subj 'description)
                            (pretty-print-expression
-                            (verification-subject-quoted-expression subj)))))
-      (print (conc (current-pending-designator) " " description))))
+                            (verification-subject-quoted-expression subj))))
+          (reason (meta-data-get subj 'pending))
+          (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
+      (print (conc (current-pending-designator) reason-str " " description))))
 
   (current-success-notification-receiver report-success)
   (current-failure-notification-receiver report-failure)
