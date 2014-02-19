@@ -77,15 +77,45 @@
 
 (test-group "describe")
 
-(test-group "meta")
+(test-group "meta"
+  (test "it adds on piece of data"
+    'test
+    (extract-subject (subj (meta (foo: test) (verify #t)))
+       (meta-data-get subj 'foo)))
 
-(test-group "verify-every")
+  (test-group "nested meta"
+    (test "last meta wins"
+      'test2
+      (extract-subject (subj (meta (foo: test)
+                               (meta (foo: test2)
+                                 (verify #t))))
+        (meta-data-get subj 'foo)))
+    (test "is only visible in its scope"
+      'test
+      (extract-subject (subj (meta (foo: test)
+                               (meta (foo: test2))
+                               (verify #t)))
+        (meta-data-get subj 'foo)))
+    (test "adds up"
+      '(test test2)
+      (extract-subject (subj (meta (foo: test)
+                               (meta (bar: test2)
+                                 (verify #t))))
+       (list (meta-data-get subj 'foo) (meta-data-get subj 'bar))))))
 
-(test-group "falsify-every")
+(test-group "verify-every"
+   (test "it runs every verification"
+         2
+         (length (verify-every 3
+                     (is > 0)
+                     (is > 1)))))
 
-
-
-
+(test-group "falsify-every"
+   (test "it runs all falsifications"
+         2
+         (length (falsify-every 42
+                                (is < 0)
+                                (is < -10)))))
 
 (test-group "verifiers"
   (test-group "is"
