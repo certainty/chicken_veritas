@@ -93,7 +93,7 @@
     (test "is only visible in its scope"
       'test
       (extract-subject (subj (meta (foo: test)
-                               (meta (foo: test2))
+                               (meta (foo: test2) #t)
                                (verify #t)))
         (meta-data-get subj 'foo)))
     (test "adds up"
