@@ -119,8 +119,9 @@
    (test "it runs all falsifications"
          2
          (length (falsify-every 42
-                                (is < 0)
-                                (is < -10)))))
+                   (is < 0)
+                   (is < -10)))))
+
 
 (test-group "verifiers"
   (test-group "is"
@@ -130,15 +131,30 @@
               (test "with predicate"
                     #t
                     (verification-success? (verify 3 (is > 2))))
+
+              (test "with predicate / failure output"
+                    "Expected 3 to be < 2 "
+                    (verification-result-message (verify 3 (is < 2))))
+
               (test "with true"
                     #t
                     (verification-success? (verify #t (is true))))
+
+              (test "with true / failure output"
+                    "Expected #f to be equal to #t"
+                    (verification-result-message (verify #f (is true))))
+
               (test "with false"
                     #t
                     (verification-success? (verify #f (is false))))
               (test "list-including"
                     #t
                     (verification-success? (verify (list 1 2) (is (list-including 2)))))
+
+              (test "list-including / failure output"
+                    "Expected (1 2) to be a list that includes (3)"
+                    (verification-result-message (verify (list 1 2) (is (list-including 3)))))
+
               (test "list-including negative"
                     #t
                     (verification-failure? (verify (list 1 2) (is (list-including 0)))))
@@ -167,5 +183,6 @@
                     (verification-success? (verify 1 (is (any-of 1 2 3)))))
               (test "any-of negative"
                     #t
-                    (verification-failure? (verify 1 (is (any-of 0))))))
+                    (verification-failure? (verify 1 (is (any-of 0)))))
+              )
   )
