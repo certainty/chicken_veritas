@@ -1,4 +1,4 @@
-(use veritas-console data-generators)
+(use veritas-console veritas-quickcheck data-generators)
 
 (verify #t)
 (verify #t "This is a test")
@@ -21,3 +21,11 @@
 
 (pending "this is my reason"
   (verify 3 (is 2)))
+
+(quickcheck (subj (gen-uint8))
+  ;; will probably fail but is reported only once
+  (verify subj (is < 100))
+  (pending
+   (verify subj (is < 100)))
+  ;; reported only once
+  (verify subj (is positive?)))
