@@ -109,46 +109,73 @@
 
 ;; SYNTAX
 ;; TODO: find a way to generate both verify and falsify with only one syntax
-(define-syntax verify
-  (ir-macro-transformer
-   (lambda (expr inject compare)
-     (match expr
-       ((_ expr)
-        `(verify ,expr (boolean-verifier)))
-       ((_ expr (? string? description))
-        `(verify ,expr (boolean-verifier) ,description))
-       ((_ expr verifier)
-        (let ((id (gensym 'veritas)))
-          `(let ((subject (make-verification-subject
-                           (quote (verify ,expr ,verifier))
-                           (delay ,expr)
-                           (current-meta-data))))
-             (notify (run-verification (quote ,id) subject ,verifier #f)))))
-       ((_ expr verifier (? string? description))
-        `(meta (description: ,description)
-           (verify ,expr ,verifier)))
-       (else (syntax-error 'verify "Invalid syntax"))))))
+
+(define-syntax define-verify
+  (syntax-rules ()
+    ((_ name complement?)
+     (define-syntax name
+       (ir-macro-transformer
+        (lambda (expr inject compare)
+          (match expr
+            ((_ expr)
+             `(name ,expr (boolean-verifier)))
+            ((_ expr (? string? description))
+             `(name ,expr (boolean-verifier) ,description))
+            ((_ expr verifier)
+             (let ((id (gensym 'veritas)))
+               `(let ((subject (make-verification-subject
+                                (quote (verify ,expr ,verifier))
+                                (delay ,expr)
+                                (current-meta-data))))
+                  (notify (run-verification (quote ,id) subject ,verifier complement?)))))
+            ((_ expr verifier (? string? description))
+             `(meta (description: ,description)
+                (name ,expr ,verifier)))
+            (else (syntax-error (quote name) "Invalid syntax")))))))))
+
+(define-verify verify #f)
+(define-verify falsify #t)
+
+;; (define-syntax verify
+;;   (ir-macro-transformer
+;;    (lambda (expr inject compare)
+;;      (match expr
+;;        ((_ expr)
+;;         `(verify ,expr (boolean-verifier)))
+;;        ((_ expr (? string? description))
+;;         `(verify ,expr (boolean-verifier) ,description))
+;;        ((_ expr verifier)
+;;         (let ((id (gensym 'veritas)))
+;;           `(let ((subject (make-verification-subject
+;;                            (quote (verify ,expr ,verifier))
+;;                            (delay ,expr)
+;;                            (current-meta-data))))
+;;              (notify (run-verification (quote ,id) subject ,verifier #f)))))
+;;        ((_ expr verifier (? string? description))
+;;         `(meta (description: ,description)
+;;            (verify ,expr ,verifier)))
+;;        (else (syntax-error 'verify "Invalid syntax"))))))
 
 
-(define-syntax falsify
-  (ir-macro-transformer
-   (lambda (expr inject compare)
-     (match expr
-       ((_ expr)
-        `(falsify ,expr (boolean-verifier)))
-       ((_ expr (? string? description))
-        `(falsify ,expr (boolean-verifier) ,description))
-       ((_ expr verifier)
-        (let ((id (gensym 'veritas)))
-          `(let ((subject (make-verification-subject
-                           (quote (falsify ,expr ,verifier))
-                           (delay ,expr)
-                           (current-meta-data))))
-             (notify (run-verification (quote ,id) subject ,verifier #t)))))
-       ((_ expr verifier (? string? description))
-        `(meta (description: ,description)
-           (falsify ,expr ,verifier)))
-       (else (syntax-error 'falsify "Invalid syntax"))))))
+;; (define-syntax falsify
+;;   (ir-macro-transformer
+;;    (lambda (expr inject compare)
+;;      (match expr
+;;        ((_ expr)
+;;         `(falsify ,expr (boolean-verifier)))
+;;        ((_ expr (? string? description))
+;;         `(falsify ,expr (boolean-verifier) ,description))
+;;        ((_ expr verifier)
+;;         (let ((id (gensym 'veritas)))
+;;           `(let ((subject (make-verification-subject
+;;                            (quote (falsify ,expr ,verifier))
+;;                            (delay ,expr)
+;;                            (current-meta-data))))
+;;              (notify (run-verification (quote ,id) subject ,verifier #t)))))
+;;        ((_ expr verifier (? string? description))
+;;         `(meta (description: ,description)
+;;            (falsify ,expr ,verifier)))
+;;        (else (syntax-error 'falsify "Invalid syntax"))))))
 
 
 (define-syntax verify-every
