@@ -7,12 +7,11 @@
 (define current-meta-data (make-parameter '()))
 
 (define-record verification-subject quoted-expression expression-promise meta-data)
+(define-record verification-result verifier subject message status)
 
-(define-record verification-result subject message status)
-
-(define (fail    subject message) (make-verification-result subject message 'fail))
-(define (pass    subject) (make-verification-result subject "" 'pass))
-(define (pending subject) (make-verification-result subject "" 'pending))
+(define (fail   verifier-name subject message) (make-verification-result verifier-name subject message 'fail))
+(define (pass   verifier-name subject)         (make-verification-result verifier-name subject "" 'pass))
+(define (pending verifier-name subject)        (make-verification-result verifier-name subject "" 'pending))
 
 (define (verification-failure? result)
   (and (verification-result? result)
@@ -70,7 +69,7 @@
 ;; or in its own thread
 (define (run-verification subject verifier complement?)
   (if (meta-data-get subject 'pending)
-      (pending subject)
+      (pending 'nil subject)
       (apply-verifier subject verifier complement?)))
 
 (define (apply-verifier subject verifier complement?)
@@ -80,17 +79,18 @@
 
 (define (condition->verification-failure condition) #t)
 
+
 ;; the verifier protocol is simple
 ;; a verifier is a procedure that returns a procedure of two arguments
 ;; 1) subject - the verification subject
 ;; 2) complement? - is that in complement context
 (define ((boolean-verifier . args) subject complement?)
-  (let* ((expr (verification-subject-expression-promise subject))
+  (let* ((expr        (verification-subject-expression-promise subject))
          (quoted-expr (verification-subject-quoted-expression subject))
-         (result (if complement? (not (force expr)) (force expr))))
+         (result      (if complement? (not (force expr)) (force expr))))
     (if result
-        (pass subject)
-        (fail subject
+        (pass 'boolean subject)
+        (fail 'boolean subject
               (if complement?
                   (sprintf "Expected ~S not to hold" (cadr quoted-expr))
                   (sprintf "Expected ~S to hold" (cadr quoted-expr)))))))
