@@ -49,8 +49,10 @@
    (else
     (< (abs (/ (- a b) b)) epsilon))))
 
-(define ((is-verifier pred-or-value) subject complement?)
 
+;; TODO:
+;; special-case this for strings and use format-textdiff
+(define ((is-verifier pred-or-value) subject complement?)
   (let* ((quoted-expr (verification-subject-quoted-expression subject))
          (expr        (verification-subject-expression-promise subject))
          (value (force expr))
@@ -123,7 +125,6 @@
               args)))
 
 )
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ;; Have/Has
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
