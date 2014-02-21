@@ -1,20 +1,36 @@
 (module veritas-verifiers
   *
   (import chicken scheme data-structures extras ports srfi-69)
-  (use veritas srfi-1)
+  (use veritas srfi-1 matchable)
 
 (define (eval-expr complement? expr)
   ((if complement? not identity) expr))
 
 (define (message-from-predicate-form form)
   (if (list? form)
-      (let ((name (symbol->string (car form))))
+      (let* ((rest (third form))
+             (name (car rest))
+             (args (flatten (cdr rest))))
         (with-output-to-string
           (lambda ()
-            (display (string-translate name "-" " "))
-            (display " ")
-            (for-each (cut printf "~A " <>) (cdr form)))))
+            (for-each (cut printf "~A " <>) args))))
       form))
+
+;; (define-syntax is
+;;   (syntax-rules (a an true false)
+;;     ((_ true)
+;;      (is #t))
+;;     ((_ false)
+;;      (is #f))
+;;     ((_ a type)
+;;      (verify-type type))
+;;     ((_ an type)
+;;      (verify-type type))
+;;     ((_ pred-or-value)
+;;      (is-verifier pred-or-value))
+;;     ((_ pred value more-values ...)
+;;      (is-verifier/predicate pred (list value more-values ...)))))
+
 
 (define-syntax is
   (syntax-rules (a an true false)
@@ -22,21 +38,23 @@
      (is #t))
     ((_ false)
      (is #f))
-    ((_ a type)
-     (verify-type type))
-    ((_ an type)
-     (verify-type type))
     ((_ pred-or-value)
-     (is-verifier pred-or-value))
-    ((_ pred value more-values ...)
-     (is-verifier/predicate pred (list value more-values ...)))))
+     (if (procedure? pred-or-value)
+         (is-verifier pred-or-value)
+         (is-verifier (make-equal-predicate? pred-or-value))))
+    ((_ (predicate-ctor body0 ...))
+     (is-verifier (predicate-ctor body0 ...)))
+    ((_ pred value0 value1 ...)
+     (is-verifier/curried-predicate pred (list value0 value1 ...)))))
 
-(define (is-equal? a b)
-  (or (equal? a b)
-      (and (number? a)
-           (inexact? a)
-           (inexact? b)
-           (approx-equal? a b))))
+(define ((make-equal-predicate? a) subject complement?)
+  (let* ((b (force (verification-subject-expression-promise subject)))
+         (res (or (equal? a b)
+                 (and (number? a)
+                      (inexact? a)
+                      (inexact? b)
+                      (approx-equal? a b)))))
+    (values res (sprintf "Expected ~a to be equal to ~a" b a))))
 
 (define current-equality-epsilon (make-parameter 1e-5))
 
@@ -49,38 +67,30 @@
    (else
     (< (abs (/ (- a b) b)) epsilon))))
 
+;;(verify subj (is 3))
+;;(verify subj (is predicate?))
+;;(verify subj (is (predicate-constructor args)))
+;;(verify subj (is curried-pred args)) ;; (is > 3)
+(define ((is-verifier pred) subject complement?)
+  (let* ((quoted-expr (verification-subject-quoted-expression  subject))
+         (expr        (verification-subject-expression-promise subject))
+         (value       (force expr)))
+    (receive (result message) (pred subject complement?)
+        (if result
+            (pass subject)
+            (fail subject message)))))
 
-;; TODO:
-;; special-case this for strings and use format-textdiff
-(define ((is-verifier pred-or-value) subject complement?)
+(define ((is-verifier/curried-predicate pred values) subject complement?)
   (let* ((quoted-expr (verification-subject-quoted-expression subject))
          (expr        (verification-subject-expression-promise subject))
          (value       (force expr))
-         (result
-          (eval-expr
-           complement?
-           (if (procedure? pred-or-value)
-               (pred-or-value value)
-               (is-equal? pred-or-value value)))))
-    (if result
-        (pass subject)
-        (cond
-         ((procedure? pred-or-value)
-          (fail subject (sprintf "Expected ~S ~A be ~A" value (if complement? "not to" "to") (message-from-predicate-form quoted-expr))))
-         (else
-          (fail subject (sprintf "Expected ~S ~A be ~S" value (if complement? "not to" "to") pred-or-value)))))))
-
-(define ((is-verifier/predicate pred values) subject complement?)
-  (let* ((quoted-expr (verification-subject-quoted-expression subject))
-         (expr (verification-subject-expression-promise subject))
-         (value (force expr))
-         (result (eval-expr complement? (apply pred value values))))
+         (result      (eval-expr complement? (apply pred value values))))
     (if result
         (pass subject)
         (fail subject
               (if complement?
                   (sprintf "Expected ~S not to be ~S" value quoted-expr)
-                  (sprintf "Expected ~S to be ~S" value quoted-expr))))))
+                  (sprintf "Expected ~S to be ~A"     value (message-from-predicate-form quoted-expr)))))))
 
 (define-syntax verify-type
   (lambda (form rename env)
@@ -98,31 +108,44 @@
         (pass subject)
         (fail subject (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
-(define ((close-to what #!key (delta 0.3)) actual)
-  (approx-equal? what actual delta))
+(define ((close-to what #!key (delta 0.3)) actual complement?)
+  (values (approx-equal? what actual delta)
+          (sprintf "Expected ~a to be roughly equal to ~a (epsilon ~a)" actual what delta)))
 
 (define roughly close-to)
 
-(define ((any-of item . more-items) subject)
-  (member subject (cons item more-items)))
+(define ((any-of item . more-items) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject))))
+    (values (member value (cons item more-items))
+            (sprintf "Expected ~a to be a member of ~a" value (cons item more-items)))))
 
-(define ((none-of item . more-items) subject)
-  (not (member subject (cons item more-items))))
+(define ((none-of item . more-items) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject))))
+    (values (not (member value (cons item more-items)))
+            (sprintf "Expected ~a not to be a member of ~a" value (cons item more-items)))))
 
-(define ((list-including item . more-items) subject)
-  (and (list? subject)
-       (every (cut member <> subject) (cons item more-items))))
 
-(define ((vector-including . args) subject)
-  (and (vector? subject)
-       (let ((subject (vector->list subject)))
-         (every (cut member <> subject) args))))
+(define ((list-including item . more-items) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject))))
+    (values  (and (list? value)
+                  (every (cut member <> value) (cons item more-items)))
+             (sprintf "Expected ~a to be a list that includes ~a" value (cons item more-items)))))
 
-(define ((hash-table-including . args) subject)
-  (and (hash-table? subject)
-       (every (lambda (pair)
-                (equal? (cdr pair) (hash-table-ref subject (car pair))))
-              args)))
+(define ((vector-including . args) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject))))
+    (values (and (vector? value)
+                 (let ((value (vector->list value)))
+                   (every (cut member <> value) args)))
+            (sprintf "Expected ~a to be vector that includes ~a" value args))))
+
+(define ((hash-table-including . args) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject))))
+    (values (and (hash-table? value)
+                 (every (lambda (pair)
+                          (equal? (cdr pair) (hash-table-ref value (car pair))))
+                        args))
+            (sprintf "Expected ~a to be a hash-table that includes ~a" value args))))
+
 
 )
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
