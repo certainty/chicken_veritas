@@ -14,6 +14,9 @@
   results and display all failures. It would pick the very first failure for
   each failed verifier and display only these.
 
+  There should be a parameter to configure the amount of samples used per
+  verification run
+
 * FEATURE filter verifications by meta data
   Add a possibility to exclude/include verifications based on meta data.
   There should be two ways to configure filters

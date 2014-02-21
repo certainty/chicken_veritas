@@ -61,19 +61,19 @@
 
   (define (report-success/colors result)
     (update-statistics 'success)
-    (let ((description (or (meta-data-get (verification-success-subject result) 'description)
+    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
-                             (verification-success-subject result))))))
+                             (verification-result-subject result))))))
       (fmt #t (fmt-green (cat (current-success-designator) " " description)))
       (newline)))
 
   (define (report-success/nocolors result)
     (update-statistics 'success)
-    (let ((description (or (meta-data-get (verification-success-subject result) 'description)
+    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
-                             (verification-success-subject result))))))
+                             (verification-result-subject result))))))
       (print (conc (current-success-designator) " " (current-description)))))
 
   (define (report-failure result)
@@ -83,23 +83,23 @@
 
   (define (report-failure/colors result)
     (update-statistics 'failure)
-    (let ((description (or (meta-data-get (verification-failure-subject result) 'description)
+    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
-                             (verification-failure-subject result))))))
+                             (verification-result-subject result))))))
       (fmt #t (fmt-red (cat (current-success-designator) " " description)))
       (newline)
-      (fmt #t (cat "  " (fmt-red (verification-failure-message result))))
+      (fmt #t (cat "  " (fmt-red (verification-result-message result))))
       (newline)))
 
   (define (report-failure/nocolors result)
     (update-statistics 'failure)
-    (let ((description (or (meta-data-get (verification-failure-subject result) 'description)
+    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
-                             (verification-failure-subject result))))))
+                             (verification-result-subject result))))))
       (print (conc (current-failure-designator) " "  description))
-      (print (conc "  " (verification-failure-message result)))))
+      (print (conc "  " (verification-result-message result)))))
 
   (define (report-pending subj)
     (if (reporter-use-colors?)
