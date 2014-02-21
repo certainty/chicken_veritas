@@ -6,11 +6,17 @@
 
 (define-record verification-subject quoted-expression expression-promise meta-data)
 
-(define-record verification-failure subject message)
-(define fail make-verification-failure)
+(define-record verification-result subject message status)
+(define (fail subject message) (make-verification-result subject message 'fail))
+(define (pass subject) (make-verification-result subject "" 'pass))
 
-(define-record verification-success subject)
-(define pass make-verification-success)
+(define (verification-failure? result)
+  (and (verification-result? result)
+       (eq? 'fail (verification-result-status result))))
+
+(define (verification-success? result)
+  (and (verification-result? result)
+       (eq? 'pass (verification-result-status result))))
 
 
 (define pending? (make-parameter #f))
@@ -35,14 +41,22 @@
                   '("xterm" "xterm-color" "xterm-256color" "rxvt" "kterm"
                     "linux" "screen" "screen-256color" "vt100")))))))
 
-(define (notify-failure . args)
-  (apply (current-failure-notification-receiver) args))
+(define (notify-failure result)
+  ((current-failure-notification-receiver) result))
 
-(define (notify-success . args)
-  (apply (current-success-notification-receiver) args))
+(define (notify-success result)
+  ((current-success-notification-receiver) result))
 
-(define (notify-pending . args)
-  (apply (current-pending-notification-receiver) args))
+(define (notify-pending subject)
+  ((current-pending-notification-receiver) subject))
+
+(define (notify result)
+  (cond
+   ((verification-failure? result)
+    (notify-failure result))
+   ((verification-success? result)
+    (notify-success result))
+   (else (error "invalid result" result))))
 
 (define (merge-alists lhs rhs)
   (fold (lambda (elt ls) (alist-update (car elt) (cdr elt) ls)) lhs rhs))

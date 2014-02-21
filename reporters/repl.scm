@@ -26,14 +26,14 @@
 
   (define (print-failure/colors result out)
     (fmt out (fmt-red (fmt-bold (cat (current-failure-designator) "  "))))
-    (fmt out (fmt-red (verification-failure-message result))))
+    (fmt out (fmt-red (verification-result-message result))))
 
   (define (print-failure/nocolors result out)
     (display (conc (current-failure-designator) "  ") out)
-    (display (verification-failure-message result) out))
+    (display (verification-result-message result) out))
 
-  (define-record-printer (verification-success result out)
-    (print-success result out))
-
-  (define-record-printer (verification-failure result out)
-    (print-failure result out)))
+  (define-record-printer (verification-result result out)
+    (if (verification-failure? result)
+        (print-failure result out)
+        (print-success result out)))
+)

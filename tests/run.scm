@@ -11,13 +11,13 @@
   (syntax-rules ()
     ((_ (subject-name verify-exp) body0 ...)
      (with-protocol* verify-exp
-      ((lambda (subject-name) body0 ...) (verification-success-subject (car  *success-notifications*)))))))
+      ((lambda (subject-name) body0 ...) (verification-result-subject (car  *success-notifications*)))))))
 
 
-(test-group "running verifications"
-  (test "handles errors that bubble up"
-        #t
-        (verification-failure? (verify (error "test")))))
+;; (test-group "running verifications"
+;;   (test "handles errors that bubble up"
+;;         #t
+;;         (verification-failure? (verify (error "test")))))
 
 (test-group "verify syntax"
   (test-group "(verify exp)"
