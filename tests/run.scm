@@ -19,7 +19,6 @@
         #t
         (verification-failure? (verify (error "test")))))
 
-
 (test-group "verify syntax"
   (test-group "(verify exp)"
      (test "creates subject with correct qouted expression"
