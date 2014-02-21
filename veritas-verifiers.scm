@@ -55,7 +55,7 @@
 (define ((is-verifier pred-or-value) subject complement?)
   (let* ((quoted-expr (verification-subject-quoted-expression subject))
          (expr        (verification-subject-expression-promise subject))
-         (value (force expr))
+         (value       (force expr))
          (result
           (eval-expr
            complement?
@@ -63,12 +63,12 @@
                (pred-or-value value)
                (is-equal? pred-or-value value)))))
     (if result
-        (pass subject)
+        (pass 'is subject)
         (cond
          ((procedure? pred-or-value)
-          (fail subject (sprintf "Expected ~S ~A be ~A" value (if complement? "not to" "to") (message-from-predicate-form quoted-expr))))
+          (fail 'is subject (sprintf "Expected ~S ~A be ~A" value (if complement? "not to" "to") (message-from-predicate-form quoted-expr))))
          (else
-          (fail subject (sprintf "Expected ~S ~A be ~S" value (if complement? "not to" "to") pred-or-value)))))))
+          (fail 'is subject (sprintf "Expected ~S ~A be ~S" value (if complement? "not to" "to") pred-or-value)))))))
 
 (define ((is-verifier/predicate pred values) subject complement?)
   (let* ((quoted-expr (verification-subject-quoted-expression subject))
@@ -76,8 +76,8 @@
          (value (force expr))
          (result (eval-expr complement? (apply pred value values))))
     (if result
-        (pass subject)
-        (fail subject
+        (pass 'is subject)
+        (fail 'is subject
               (if complement?
                   (sprintf "Expected ~S not to be ~S" value quoted-expr)
                   (sprintf "Expected ~S to be ~S" value quoted-expr))))))
@@ -95,8 +95,8 @@
          (value (force expr))
          (result (eval-expr complement? (type-pred value))))
     (if result
-        (pass subject)
-        (fail subject (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
+        (pass 'is subject)
+        (fail 'is subject (sprintf "Expected ~S ~A be a ~A" value (if complement? "not to" "to") type)))))
 
 (define ((close-to what #!key (delta 0.3)) actual)
   (approx-equal? what actual delta))
