@@ -74,7 +74,7 @@
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
-      (print (conc (current-success-designator) " " (current-description)))))
+      (print (conc (current-success-designator) " " description))))
 
   (define (report-failure result)
     (if (reporter-use-colors?)

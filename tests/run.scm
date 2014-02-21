@@ -69,7 +69,7 @@
                   (with-protocol*
                    (pending
                     (verify #f))
-                   (verification-subject? (car *pending-notifications*)))))
+                   (verification-pending? (car *pending-notifications*)))))
 
 (test-group "pending"
   (test "it doesn't run the contained tests"

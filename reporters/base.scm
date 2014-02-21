@@ -9,6 +9,18 @@
       (fancy . (" ✔" " ✘" " ☐"))
       (smileys . (" ☺" " ☹" " ☐"))))
 
+  ;; support procedures for reporter
+  (define reporter-use-colors?
+    (make-parameter
+     (cond
+      ((get-environment-variable "VERITAS_USE_COLORS")
+       => (lambda (s) (not (equal? s "0"))))
+      (else
+       (and (##sys#tty-port? (current-output-port))
+            (member (get-environment-variable "TERM")
+                    '("xterm" "xterm-color" "xterm-256color" "rxvt" "kterm"
+                      "linux" "screen" "screen-256color" "vt100")))))))
+
   (define current-reporting-designators (make-parameter 'fancy))
 
   (define (current-success-designator)
