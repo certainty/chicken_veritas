@@ -6,6 +6,9 @@
 (compile -s -d0 -O3 -S veritas-verifiers.scm -j veritas-verifiers)
 (compile -s -d0 -O3 veritas-verifiers.import.scm)
 
+(compile -s -d0 -O3 -S veritas-quickcheck.scm -j veritas-quickcheck)
+(compile -s -d0 -O3 veritas-quickcheck.import.scm)
+
 (compile -s -d0 -O3 -S reporters/base.scm -j veritas-base-reporter -o veritas-base-reporter.so)
 (compile -s -d0 -O3 veritas-base-reporter.import.scm)
 

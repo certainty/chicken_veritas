@@ -106,9 +106,10 @@
         (report-pending/colors subj)
         (report-pending/nocolors subj)))
 
-  (define (report-pending/colors subj)
+  (define (report-pending/colors result)
     (update-statistics 'pending)
-    (let* ((description (or (meta-data-get subj 'description)
+    (let* ((subj (verification-result-subject result))
+           (description (or (meta-data-get subj 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression subj))))
            (reason (meta-data-get subj 'pending))

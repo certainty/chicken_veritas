@@ -7,11 +7,11 @@
 (define current-meta-data (make-parameter '()))
 
 (define-record verification-subject quoted-expression expression-promise meta-data)
-(define-record verification-result verifier subject message status)
+(define-record verification-result id subject message status)
 
-(define (fail   verifier-name subject message) (make-verification-result verifier-name subject message 'fail))
-(define (pass   verifier-name subject)         (make-verification-result verifier-name subject "" 'pass))
-(define (pending verifier-name subject)        (make-verification-result verifier-name subject "" 'pending))
+(define (fail    subject message) (make-verification-result 'nil subject message 'fail))
+(define (pass    subject)         (make-verification-result 'nil subject "" 'pass))
+(define (pending subject)         (make-verification-result 'nil subject "" 'pending))
 
 (define (verification-failure? result)
   (and (verification-result? result)
@@ -62,15 +62,27 @@
 (define (meta-data-get subject key)
   (alist-ref key (verification-subject-meta-data subject)))
 
+(define (collect-verification-results thunk)
+  (let* ((results '())
+         (handler (lambda (result) (set! results (cons result results)))))
+    (parameterize ((current-failure-notification-receiver handler)
+                   (current-success-notification-receiver handler)
+                   (current-pending-notification-receiver handler))
+      (thunk)
+      (reverse results))))
 
 ;; this little indirection is here to have control over
 ;; how/if tests are run.
 ;; for example one might want to run them in a sandbox
 ;; or in its own thread
-(define (run-verification subject verifier complement?)
+(define (run-verification id subject verifier complement?)
   (if (meta-data-get subject 'pending)
-      (pending 'nil subject)
-      (apply-verifier subject verifier complement?)))
+      (set-id! id (pending subject))
+      (set-id! id (apply-verifier subject verifier complement?))))
+
+(define (set-id! id result)
+  (verification-result-id-set! result id)
+  result)
 
 (define (apply-verifier subject verifier complement?)
   ;; add timing and error handling
@@ -78,7 +90,6 @@
     (e () (condition->verification-failure e))))
 
 (define (condition->verification-failure condition) #t)
-
 
 ;; the verifier protocol is simple
 ;; a verifier is a procedure that returns a procedure of two arguments
@@ -89,8 +100,8 @@
          (quoted-expr (verification-subject-quoted-expression subject))
          (result      (if complement? (not (force expr)) (force expr))))
     (if result
-        (pass 'boolean subject)
-        (fail 'boolean subject
+        (pass subject)
+        (fail subject
               (if complement?
                   (sprintf "Expected ~S not to hold" (cadr quoted-expr))
                   (sprintf "Expected ~S to hold" (cadr quoted-expr)))))))
@@ -107,14 +118,12 @@
        ((_ expr (? string? description))
         `(verify ,expr (boolean-verifier) ,description))
        ((_ expr verifier)
-        `(notify
-          (run-verification
-           (make-verification-subject
-            (quote (verify ,expr ,verifier))
-            (delay ,expr)
-            (current-meta-data))
-           ,verifier
-           #f)))
+        (let ((id (gensym 'veritas)))
+          `(let ((subject (make-verification-subject
+                           (quote (verify ,expr ,verifier))
+                           (delay ,expr)
+                           (current-meta-data))))
+             (notify (run-verification (quote ,id) subject ,verifier #f)))))
        ((_ expr verifier (? string? description))
         `(meta (description: ,description)
            (verify ,expr ,verifier)))
@@ -130,14 +139,12 @@
        ((_ expr (? string? description))
         `(falsify ,expr (boolean-verifier) ,description))
        ((_ expr verifier)
-        `(notify
-          (run-verification
-           (make-verification-subject
-            (quote (falsify ,expr ,verifier))
-            (delay ,expr)
-            (current-meta-data))
-           ,verifier
-           #t)))
+        (let ((id (gensym 'veritas)))
+          `(let ((subject (make-verification-subject
+                           (quote (falsify ,expr ,verifier))
+                           (delay ,expr)
+                           (current-meta-data))))
+             (notify (run-verification (quote ,id) subject ,verifier #t)))))
        ((_ expr verifier (? string? description))
         `(meta (description: ,description)
            (falsify ,expr ,verifier)))
@@ -178,6 +185,7 @@
     ((_ (k v ...) body0 ...)
      (parameterize ((current-meta-data (merge-meta-data (quote (k v ...)))))
        body0 ...))))
+
 
 
 )
