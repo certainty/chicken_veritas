@@ -87,7 +87,7 @@
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
-      (fmt #t (fmt-red (cat (current-success-designator) " " description)))
+      (fmt #t (fmt-red (cat (current-failure-designator) " " description)))
       (newline)
       (fmt #t (cat "  " (fmt-red (verification-result-message result))))
       (newline)))
