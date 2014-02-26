@@ -1,7 +1,7 @@
 (module veritas-verifiers
   *
   (import chicken scheme data-structures extras ports srfi-69)
-  (use veritas srfi-1 matchable)
+  (use veritas srfi-1 matchable fmt format-textdiff srfi-1)
 
 (define (eval-expr complement? expr)
   ((if complement? not identity) expr))
@@ -16,22 +16,6 @@
             (for-each (cut printf "~A " <>) args))))
       form))
 
-;; (define-syntax is
-;;   (syntax-rules (a an true false)
-;;     ((_ true)
-;;      (is #t))
-;;     ((_ false)
-;;      (is #f))
-;;     ((_ a type)
-;;      (verify-type type))
-;;     ((_ an type)
-;;      (verify-type type))
-;;     ((_ pred-or-value)
-;;      (is-verifier pred-or-value))
-;;     ((_ pred value more-values ...)
-;;      (is-verifier/predicate pred (list value more-values ...)))))
-
-
 (define-syntax is
   (syntax-rules (a an true false)
     ((_ true)
@@ -41,20 +25,44 @@
     ((_ pred-or-value)
      (if (procedure? pred-or-value)
          (is-verifier pred-or-value)
-         (is-verifier (make-equal-predicate? pred-or-value))))
-    ((_ (predicate-ctor body0 ...))
-     (is-verifier (predicate-ctor body0 ...)))
+         (is-verifier (make-equal-predicate pred-or-value))))
     ((_ pred value0 value1 ...)
      (is-verifier/curried-predicate pred (list value0 value1 ...)))))
 
-(define ((make-equal-predicate? a) subject complement?)
+(define ((predicate-applier pred) subject complement?)
+  (let ((value (force (verification-subject-expression-promise subject)))
+        (expr  (verification-subject-quoted-expression subject)))
+    (values (pred value)
+            (sprintf "Expected (~a ~a) to be true" (third expr) value))))
+
+(define ((make-equal-predicate a) subject complement?)
   (let* ((b (force (verification-subject-expression-promise subject)))
          (res (or (equal? a b)
                  (and (number? a)
                       (inexact? a)
                       (inexact? b)
                       (approx-equal? a b)))))
-    (values res (sprintf "Expected ~a to be equal to ~a" b a))))
+    (values res (make-equality-failure-message a b))))
+
+(define (make-equality-failure-message expected actual)
+  (cond
+   ((and (string? actual) (string? expected))
+    (let ((actual-lines (string-split actual "\n"))
+          (expected-lines (string-split expected "\n")))
+      (with-output-to-string
+        (lambda ()
+          (printf "expected: ~s~%"  expected)
+          (printf "     got: ~s~%" actual)
+          (when (or (> 1 (length actual-lines)) (> 1 (length expected-lines)))
+            (let ((hunks (textdiff actual expected)))
+              (print "\n")
+              (print "   Diff:")
+              (print ((make-format-textdiff 'rcs) (current-output-port) hunks))))))))
+   (else
+    (with-output-to-string
+      (lambda ()
+        (fmt #t (cat "expected: " (pretty expected)))
+        (fmt #t (cat "     got: " (pretty actual))))))))
 
 (define current-equality-epsilon (make-parameter 1e-5))
 
@@ -68,7 +76,6 @@
     (< (abs (/ (- a b) b)) epsilon))))
 
 ;;(verify subj (is 3))
-;;(verify subj (is predicate?))
 ;;(verify subj (is (predicate-constructor args)))
 ;;(verify subj (is curried-pred args)) ;; (is > 3)
 (define ((is-verifier pred) subject complement?)

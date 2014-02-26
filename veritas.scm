@@ -135,7 +135,6 @@
 
 (define-verify falsify #t)
 
-
 (define-syntax verify-every
   (syntax-rules ()
     ((_ expr e e+ ...)
