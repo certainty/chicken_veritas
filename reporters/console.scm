@@ -8,26 +8,28 @@
   (define pending-count 0)
   (define total-count   0)
 
-  (define passed-verifications '())
-  (define failed-verifications '())
+  (define passed-verifications  '())
+  (define failed-verifications  '())
   (define pending-verifications '())
 
-  (define reporter-summary-on-exit   (make-parameter #t))
   (define reporter-failure-exit-code (make-parameter 1))
   (define reporter-success-exit-code (make-parameter 0))
 
+  (define current-success-formatter (make-parameter (lambda _ #t)))
+  (define current-failure-formatter (make-parameter (lambda _ #t)))
+  (define current-pending-formatter (make-parameter (lambda _ #t)))
 
-  ;; (define (report-success result)
-  ;;   (update-statistics result)
-  ;;   ((current-success-formatter) result))
+  (define (report-success result)
+    (update-statistics result)
+    ((current-success-formatter) result))
 
-  ;; (define (report-failure result)
-  ;;   (update-statistics result)
-  ;;   ((current-failure-formatter) result))
+  (define (report-failure result)
+    (update-statistics result)
+    ((current-failure-formatter) result))
 
-  ;; (define (report-pending result)
-  ;;   (update-statistics result)
-  ;;   ((current-pending-formatter) result))
+  (define (report-pending result)
+    (update-statistics result)
+    ((current-pending-formatter) result))
 
   (define (update-statistics result)
     (cond
@@ -41,14 +43,12 @@
       (set! pending-cound (add1 pending-count))
       (set! pending-verifications (cons result pending-verifications)))))
 
-  ;; the overall output is splitted into 3 parts
-  ;; 1) the progress
-  ;; 2) the summary of pending and failed tests
-  ;; 3) the bottom line showing statistics
+  (define (report-details) #t)
+
+  (define (report-summary) #t)
 
   (on-exit (lambda ()
-             (when (reporter-summary-on-exit)
-               (report-summary))
+             (report-details)
              (_exit (if (zero? failure-count) (reporter-success-exit-code) (reporter-failure-exit-code)))))
 
   (define (report-summary)
@@ -75,18 +75,38 @@
     (newline)
     (flush-output))
 
-  (define (report-success result)
-    (update-statistics result)
+  ;; formatters
+  ;; short
+  (define (short/success-formatter result)
     (if (reporter-use-colors?)
-        (report-success/colors result)
-        (report-success/nocolors result)))
+        (fmt #t (fmt-green "."))
+        (display "."))
+    (flush-output))
 
-  (define (pretty-print-expression expr)
-    (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
-        `(,(car expr) ,(cadr expr))
-        expr))
+  (define (short/failure-formatter result)
+    (if (reporter-use-colors?)
+        (fmt #t (fmt-red "F"))
+        (display "F"))
+    (flush-output))
 
-  (define (report-success/colors result)
+  (define (short/pending-formatter result)
+    (if (reporter-use-colors?)
+        (fmt #t (fmt-yellow "P"))
+        (display "P"))
+    (flush-output))
+
+  (define (use-short-formatter)
+    (current-success-formatter short/success-formatter)
+    (current-failure-formatter short/failure-formatter)
+    (current-pending-formatter short/pending-formatter))
+
+  ;; documentation
+  (define (doc/success-formatter result)
+    (if (reporter-use-colors?)
+        (doc/report-success/colors result)
+        (doc/report-success/nocolors result)))
+
+  (define (doc/report-success/colors result)
     (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
@@ -94,20 +114,19 @@
       (fmt #t (fmt-green (cat (current-success-designator) " " description)))
       (newline)))
 
-  (define (report-success/nocolors result)
+  (define (doc/report-success/nocolors result)
     (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
       (print (conc (current-success-designator) " " description))))
 
-  (define (report-failure result)
-    (update-statistics result)
+  (define (doc/failure-formatter result)
     (if (reporter-use-colors?)
-        (report-failure/colors result)
-        (report-failure/nocolors result)))
+        (doc/report-failure/colors result)
+        (doc/report-failure/nocolors result)))
 
-  (define (report-failure/colors result)
+  (define (doc/report-failure/colors result)
     (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
@@ -117,7 +136,7 @@
       (fmt #t (cat "  " (fmt-red (verification-result-message result))))
       (newline)))
 
-  (define (report-failure/nocolors result)
+  (define (doc/report-failure/nocolors result)
     (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
@@ -125,13 +144,13 @@
       (print (conc (current-failure-designator) " "  description))
       (print (conc "  " (verification-result-message result)))))
 
-  (define (report-pending result)
-    (update-statistics result)
-    (if (reporter-use-colors?)
-        (report-pending/colors result)
-        (report-pending/nocolors result)))
 
-  (define (report-pending/colors result)
+  (define (doc/pending-formatter result)
+    (if (reporter-use-colors?)
+        (doc/report-pending/colors result)
+        (doc/report-pending/nocolors result)))
+
+  (define (doc/report-pending/colors result)
     (let* ((subj (verification-result-subject result))
            (description (or (meta-data-get subj 'description)
                            (pretty-print-expression
@@ -141,7 +160,7 @@
       (fmt #t (fmt-yellow (cat (current-pending-designator) reason-str " " description)))
       (newline)))
 
-  (define (report-pending/nocolors result)
+  (define (doc/report-pending/nocolors result)
     (let* ((subj (verification-result-subject result))
            ( description (or (meta-data-get subj 'description)
                              (pretty-print-expression
@@ -150,8 +169,20 @@
            (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
       (print (conc (current-pending-designator) reason-str " " description))))
 
+  (define (pretty-print-expression expr)
+    (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
+        `(,(car expr) ,(cadr expr))
+        expr))
+
+  (define (use-documentation-formatter)
+    (current-success-formatter doc/success-formatter)
+    (current-failure-formatter doc/failure-formatter)
+    (current-pending-formatter doc/pending-formatter))
+
+
+  ;;the defaut is the short-formatter
+  (use-short-formatter)
+
   (current-success-notification-receiver report-success)
   (current-failure-notification-receiver report-failure)
-  (current-pending-notification-receiver report-pending)
-
-)
+  (current-pending-notification-receiver report-pending))
