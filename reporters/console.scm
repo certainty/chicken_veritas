@@ -45,12 +45,6 @@
 
   (define (report-details) #t)
 
-  (define (report-summary) #t)
-
-  (on-exit (lambda ()
-             (report-details)
-             (_exit (if (zero? failure-count) (reporter-success-exit-code) (reporter-failure-exit-code)))))
-
   (define (report-summary)
     (if (reporter-use-colors?)
         (report-summary/colors)
@@ -185,4 +179,11 @@
 
   (current-success-notification-receiver report-success)
   (current-failure-notification-receiver report-failure)
-  (current-pending-notification-receiver report-pending))
+  (current-pending-notification-receiver report-pending)
+
+  (on-exit (lambda ()
+             (report-details)
+             (report-summary)
+             (_exit (if (zero? failure-count) (reporter-success-exit-code) (reporter-failure-exit-code)))))
+
+  )
