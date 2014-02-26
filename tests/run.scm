@@ -128,11 +128,11 @@
               (test "with values"
                     #t
                     (verification-success? (verify 3 (is 3))))
-              (test "with predicate"
+              (test "with curried predicate "
                     #t
                     (verification-success? (verify 3 (is > 2))))
 
-              (test "with predicate / failure output"
+              (test "with curried predicate / failure output"
                     "Expected 3 to be < 2 "
                     (verification-result-message (verify 3 (is < 2))))
 
@@ -141,7 +141,7 @@
                     (verification-success? (verify #t (is true))))
 
               (test "with true / failure output"
-                    "Expected #f to be equal to #t"
+                    "expected: #t\n     got: #f\n"
                     (verification-result-message (verify #f (is true))))
 
               (test "with false"
