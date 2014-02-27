@@ -76,7 +76,7 @@
           (result (cdr entry)))
       (fmt #t (space-to 4) (cat id ") " (extract-description result) nl nl))
       (report-failure-details result)
-      (fmt #t nl nl)))
+      (fmt #t nl)))
 
   (define (report-failure-details result)
     (fmt #t (format-failure-lines (verification-result-message result) 8) nl))
