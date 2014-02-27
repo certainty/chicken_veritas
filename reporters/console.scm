@@ -3,10 +3,12 @@
   (import chicken scheme extras)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity))
 
-  (define current-column 0)
+  (define current-column (make-parameter 0))
   (define passed-count 0)
   (define failed-verifications  '())
   (define pending-verifications '())
+
+  (define current-description #f)
 
   (define current-failure-exit-code (make-parameter 1))
   (define current-success-exit-code (make-parameter 0))
@@ -31,6 +33,9 @@
   (define (report-pending result)
     (update-statistics result)
     ((current-pending-formatter) result))
+
+  (define (colorize comb)
+    (if (reporter-use-colors?) comb identity))
 
   ;; TODO find a better/adequate name
   (define (update-statistics result #!optional id)
@@ -83,21 +88,15 @@
   ;; formatters
   ;; short
   (define (short/success-formatter result)
-    (if (reporter-use-colors?)
-        (fmt #t (fmt-green "."))
-        (display "."))
+    (fmt #t ((colorize fmt-green) "."))
     (flush-output))
 
   (define (short/failure-formatter result _)
-    (if (reporter-use-colors?)
-        (fmt #t (fmt-red "F"))
-        (display "F"))
+    (fmt #t ((colorize fmt-red) "F"))
     (flush-output))
 
   (define (short/pending-formatter result)
-    (if (reporter-use-colors?)
-        (fmt #t (fmt-yellow "P"))
-        (display "P"))
+    (fmt #t ((colorize fmt-yellow) "P"))
     (flush-output))
 
   (define (use-short-formatter)
@@ -107,44 +106,35 @@
 
   ;; documentation
   (define (doc/success-formatter result)
-    (if (reporter-use-colors?)
-        (doc/report-success/colors result)
-        (doc/report-success/nocolors result)))
-
-  (define (doc/report-success/colors result)
     (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
-      (fmt #t (fmt-green (cat (current-success-designator) " " description)))
-      (newline)))
-
-  (define (doc/report-success/nocolors result)
-    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
-                           (pretty-print-expression
-                            (verification-subject-quoted-expression
-                             (verification-result-subject result))))))
-      (print (conc (current-success-designator) " " description))))
+      (fmt #t
+           (space-to (current-column))
+           ((colorize fmt-green) (cat (current-success-designator) " " description nl)))))
 
 
   (define (doc/failure-formatter result failure-id)
-    (let ((colorize (if (reporter-use-colors?) fmt-red identity))
-          (description (or (meta-data-get (verification-result-subject result) 'description)
+    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
-      (fmt #t (colorize (cat (current-failure-designator) "  " description " [ID: " failure-id "]" nl)))))
+      (fmt #t
+           (space-to (current-column))
+           ((colorize fmt-red) (cat (current-failure-designator) "  " description " [ID: " failure-id "]" nl)))))
 
 
   (define (doc/pending-formatter result)
-    (let* ((colorize (if (reporter-use-colors?) fmt-yellow identity))
-           (subj (verification-result-subject result))
+    (let* ((subj (verification-result-subject result))
            (description (or (meta-data-get subj 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression subj))))
            (reason (meta-data-get subj 'pending))
            (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
-      (fmt #t (colorize (cat (current-pending-designator) reason-str " " description nl)))))
+      (fmt #t
+           (space-to (current-column))
+           ((colorize fmt-yellow) (cat (current-pending-designator) reason-str " " description nl)))))
 
   (define (pretty-print-expression expr)
     (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
@@ -155,7 +145,6 @@
     (current-success-formatter doc/success-formatter)
     (current-failure-formatter doc/failure-formatter)
     (current-pending-formatter doc/pending-formatter))
-
 
   ;;the defaut is the short-formatter
   (use-short-formatter)
