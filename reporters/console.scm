@@ -3,21 +3,18 @@
   (import chicken scheme extras)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc))
 
-  (define failure-count 0)
-  (define success-count 0)
-  (define pending-count 0)
-  (define total-count   0)
-
   (define passed-verifications  '())
   (define failed-verifications  '())
   (define pending-verifications '())
 
-  (define reporter-failure-exit-code (make-parameter 1))
-  (define reporter-success-exit-code (make-parameter 0))
+  (define current-failure-exit-code (make-parameter 1))
+  (define current-success-exit-code (make-parameter 0))
 
   (define current-success-formatter (make-parameter (lambda _ #t)))
   (define current-failure-formatter (make-parameter (lambda _ #t)))
   (define current-pending-formatter (make-parameter (lambda _ #t)))
+
+  (define (failures?) (not (null? failed-verifications)))
 
   (define (report-success result)
     (update-statistics result)
@@ -34,13 +31,10 @@
   (define (update-statistics result)
     (cond
      ((verification-failure? result)
-      (set! failure-count (add1 failure-count))
       (set! failed-verifications (cons result failed-verifications)))
      ((verification-success? result)
-      (set! success-cound (add1 success-count))
       (set! passed-verifications (cons result passed-verifications)))
      (else
-      (set! pending-cound (add1 pending-count))
       (set! pending-verifications (cons result pending-verifications)))))
 
   (define (report-details) #t)
@@ -51,23 +45,31 @@
         (report-summary/nocolors)))
 
   (define (report-summary/nocolors)
-    (newline)
-    (printf "Total: ~a Passed: ~a Pending: ~a Failed: ~a" total-count success-count pending-count failure-count)
-    (newline)
-    (flush-output))
+    (let* ((passed-count (length passed-verifications))
+           (failed-count (length failed-verifications))
+           (pending-count (length pending-verifications))
+           (total-count (+ passed-count failed-count pending-count)))
+      (newline)
+      (printf "Total: ~a Passed: ~a Pending: ~a Failed: ~a" total-count passed-count pending-count failed-count)
+      (newline)
+      (flush-output)))
 
   (define (report-summary/colors)
-    (newline)
-    (fmt #t (cat
-             (fmt-bold (cat "Total: " total-count))
-             " "
-             (fmt-green (fmt-bold (cat "Passed: " success-count)))
-             " "
-             (fmt-yellow (fmt-bold (cat "Pending: " pending-count)))
-             " "
-             (fmt-red (fmt-bold (cat "Failed: " failure-count)))))
-    (newline)
-    (flush-output))
+    (let* ((passed-count (length passed-verifications))
+           (failed-count (length failed-verifications))
+           (pending-count (length pending-verifications))
+           (total-count (+ passed-count failed-count pending-count)))
+      (newline)
+      (fmt #t (cat
+               (fmt-bold (cat "Total: " total-count))
+               " "
+               (fmt-green (fmt-bold (cat "Passed: " passed-count)))
+               " "
+               (fmt-yellow (fmt-bold (cat "Pending: " pending-count)))
+               " "
+               (fmt-red (fmt-bold (cat "Failed: " failed-count)))))
+      (newline)
+      (flush-output)))
 
   ;; formatters
   ;; short
@@ -182,8 +184,10 @@
   (current-pending-notification-receiver report-pending)
 
   (on-exit (lambda ()
+             (newline)
              (report-details)
+             (newline)
              (report-summary)
-             (_exit (if (zero? failure-count) (reporter-success-exit-code) (reporter-failure-exit-code)))))
+             (_exit (if (failures?) (current-failure-exit-code) (current-success-exit-code)))))
 
   )
