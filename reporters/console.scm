@@ -49,10 +49,11 @@
 
   (define (report-details)
     (report-pending-verifications)
+    (newline)
     (report-failed-verifications))
 
   (define (report-pending-verifications)
-    (fmt #t "Pending:" nl)
+    (fmt #t (fmt-bold "Pending:") nl)
     (for-each report-pending-verification pending-verifications))
 
 
@@ -66,7 +67,18 @@
          (verification-subject-quoted-expression
           (verification-result-subject result)))))
 
-  (define (report-failed-verifications) #t)
+  (define (report-failed-verifications)
+    (fmt #t (fmt-bold "Failed:") nl)
+    (for-each report-failed-verification (reverse failed-verifications)))
+
+  (define (report-failed-verification entry)
+    (let ((id     (car entry))
+          (result (cdr entry)))
+      (fmt #t (space-to 4) (cat id ") " (extract-description result) nl))
+      (report-failure-details result)
+      (fmt #t nl nl)))
+
+  (define (report-failure-details result) #t)
 
   (define (report-summary)
     (if (reporter-use-colors?)
@@ -127,7 +139,7 @@
   (define (doc/failure-formatter result failure-id)
     (fmt #t
          (space-to (current-column))
-         ((colorize fmt-red) (cat (current-failure-designator) "  " (extract-description result) " [ID: " failure-id "]" nl))))
+         ((colorize fmt-red) (cat (current-failure-designator) " " (extract-description result) " [ID: " failure-id "]" nl))))
 
 
   (define (doc/pending-formatter result)
@@ -135,7 +147,7 @@
            (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
       (fmt #t
            (space-to (current-column))
-           ((colorize fmt-yellow) (cat (current-pending-designator) reason-str " " (extract-description result) nl)))))
+           ((colorize fmt-yellow) (cat (current-pending-designator) " " (extract-description result) " " reason-str nl)))))
 
   (define (pretty-print-expression expr)
     (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
