@@ -1,5 +1,7 @@
 (use veritas-console veritas-quickcheck data-generators)
 
+(use-documentation-formatter)
+
 ;; (verify #t)
 (verify #t "This is a test")
 (verify (cons 1 2) (is '(1 . 2)))
@@ -26,7 +28,7 @@
   ;; will probably fail but is reported only once
   (verify subj (is < 100))
   (pending
-   (verify subj (is < 100)))
+    (verify subj (is < 100)))
   ;; reported only once
   (verify subj (is > 0)))
 
