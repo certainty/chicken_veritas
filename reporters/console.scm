@@ -60,7 +60,6 @@
   (define (report-pending-verification result)
     (fmt #t (space-to 4) ((colorize fmt-yellow) (extract-description result) nl)))
 
-
   (define (extract-description result)
     (or (meta-data-get (verification-result-subject result) 'description)
         (pretty-print-expression
@@ -139,12 +138,10 @@
          (space-to (current-column))
          ((colorize fmt-green) (cat (current-success-designator) " " (extract-description result) nl))))
 
-
   (define (doc/failure-formatter result failure-id)
     (fmt #t
          (space-to (current-column))
          ((colorize fmt-red) (cat (current-failure-designator) " " (extract-description result) " [ID: " failure-id "]" nl))))
-
 
   (define (doc/pending-formatter result)
     (let* ((reason (meta-data-get (verification-result-subject result) 'pending))
