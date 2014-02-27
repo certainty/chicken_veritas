@@ -1,7 +1,7 @@
 (module veritas-console-reporter
   (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
   (import chicken scheme extras)
-  (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity))
+  (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity string-split))
 
   (define current-column (make-parameter 0))
   (define passed-count 0)
@@ -74,11 +74,15 @@
   (define (report-failed-verification entry)
     (let ((id     (car entry))
           (result (cdr entry)))
-      (fmt #t (space-to 4) (cat id ") " (extract-description result) nl))
+      (fmt #t (space-to 4) (cat id ") " (extract-description result) nl nl))
       (report-failure-details result)
       (fmt #t nl nl)))
 
-  (define (report-failure-details result) #t)
+  (define (report-failure-details result)
+    (fmt #t (format-failure-lines (verification-result-message result) 8) nl))
+
+  (define (format-failure-lines text spaces)
+    (apply cat (map (lambda (text) (cat (space-to spaces) ((colorize fmt-red) text) nl)) (string-split text "\n"))))
 
   (define (report-summary)
     (if (reporter-use-colors?)

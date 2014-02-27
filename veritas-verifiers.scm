@@ -47,22 +47,23 @@
 (define (make-equality-failure-message expected actual)
   (cond
    ((and (string? actual) (string? expected))
-    (let ((actual-lines (string-split actual "\n"))
+    (let ((actual-lines   (string-split actual "\n"))
           (expected-lines (string-split expected "\n")))
       (with-output-to-string
         (lambda ()
-          (printf "expected: ~s~%"  expected)
+          (printf "expected: ~s~%" expected)
           (printf "     got: ~s~%" actual)
-          (when (or (> 1 (length actual-lines)) (> 1 (length expected-lines)))
-            (let ((hunks (textdiff actual expected)))
-              (print "\n")
-              (print "   Diff:")
-              (print ((make-format-textdiff 'rcs) (current-output-port) hunks))))))))
+          (when (or (> (length actual-lines) 1) (> (length expected-lines) 1))
+            (let ((hunks (textdiff actual-lines expected-lines 3)))
+              (print " \n")
+              (print "Diff:")
+              (print " \n")
+              ((make-format-textdiff 'context) (current-output-port) hunks "actual" "" "expected" "")))))))
    (else
     (with-output-to-string
       (lambda ()
-        (fmt #t (cat "expected: " (pretty expected)))
-        (fmt #t (cat "     got: " (pretty actual))))))))
+        (print "expected: " expected)
+        (print "     got: " actual))))))
 
 (define current-equality-epsilon (make-parameter 1e-5))
 
