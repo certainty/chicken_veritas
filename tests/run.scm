@@ -11,7 +11,7 @@
   (syntax-rules ()
     ((_ (subject-name verify-exp) body0 ...)
      (with-protocol* verify-exp
-      ((lambda (subject-name) body0 ...) (verification-result-subject (car  *success-notifications*)))))))
+      ((lambda (subject-name) body0 ...) (verification-result-subject (car  success-notifications)))))))
 
 
 ;; (test-group "running verifications"
@@ -57,19 +57,19 @@
                   #t
                   (with-protocol*
                    (verify #t)
-                   (verification-success? (car *success-notifications*))))
+                   (verification-success? (car success-notifications))))
 
             (test "invokation of failure notifier"
                   #t
                   (with-protocol*
                    (verify #f)
-                   (verification-failure? (car *failure-notifications*))))
+                   (verification-failure? (car failure-notifications))))
             (test "invokation of pending notifier"
                   #t
                   (with-protocol*
                    (pending
                     (verify #f))
-                   (verification-pending? (car *pending-notifications*)))))
+                   (verification-pending? (car pending-notifications)))))
 
 (test-group "pending"
   (test "it doesn't run the contained tests"
@@ -77,7 +77,7 @@
         (with-protocol*
            (pending
              (verify (error "test"))
-        *success-notifications*))))
+        success-notifications))))
 
 
 (test-group "describe")

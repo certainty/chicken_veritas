@@ -1,9 +1,9 @@
 (module veritas-console-reporter
-  ()
+  (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
   (import chicken scheme extras)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc))
 
-  (define passed-verifications  '())
+  (define passed-count 0)
   (define failed-verifications  '())
   (define pending-verifications '())
 
@@ -33,7 +33,7 @@
      ((verification-failure? result)
       (set! failed-verifications (cons result failed-verifications)))
      ((verification-success? result)
-      (set! passed-verifications (cons result passed-verifications)))
+      (set! passed-count (add1 passed-count)))
      (else
       (set! pending-verifications (cons result pending-verifications)))))
 
@@ -45,8 +45,7 @@
         (report-summary/nocolors)))
 
   (define (report-summary/nocolors)
-    (let* ((passed-count (length passed-verifications))
-           (failed-count (length failed-verifications))
+    (let* ((failed-count (length failed-verifications))
            (pending-count (length pending-verifications))
            (total-count (+ passed-count failed-count pending-count)))
       (newline)
@@ -55,8 +54,7 @@
       (flush-output)))
 
   (define (report-summary/colors)
-    (let* ((passed-count (length passed-verifications))
-           (failed-count (length failed-verifications))
+    (let* ((failed-count (length failed-verifications))
            (pending-count (length pending-verifications))
            (total-count (+ passed-count failed-count pending-count)))
       (newline)
