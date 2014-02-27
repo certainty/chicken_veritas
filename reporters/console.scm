@@ -1,8 +1,9 @@
 (module veritas-console-reporter
   (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
   (import chicken scheme extras)
-  (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc))
+  (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity))
 
+  (define current-column 0)
   (define passed-count 0)
   (define failed-verifications  '())
   (define pending-verifications '())
@@ -20,24 +21,34 @@
     (update-statistics result)
     ((current-success-formatter) result))
 
-  (define (report-failure result)
-    (update-statistics result)
-    ((current-failure-formatter) result))
+  (define report-failure
+    (let ((failure-id 0))
+      (lambda (result)
+        (set! failure-id (add1 failure-id))
+        (update-statistics result failure-id)
+        ((current-failure-formatter) result failure-id))))
 
   (define (report-pending result)
     (update-statistics result)
     ((current-pending-formatter) result))
 
-  (define (update-statistics result)
+  ;; TODO find a better/adequate name
+  (define (update-statistics result #!optional id)
     (cond
      ((verification-failure? result)
-      (set! failed-verifications (cons result failed-verifications)))
+      (set! failed-verifications (cons (cons id result) failed-verifications)))
      ((verification-success? result)
       (set! passed-count (add1 passed-count)))
      (else
       (set! pending-verifications (cons result pending-verifications)))))
 
-  (define (report-details) #t)
+  (define (report-details)
+    (report-pending-verifications)
+    (report-failed-verifications))
+
+  (define (report-pending-verifications) #t)
+
+  (define (report-failed-verifications) #t)
 
   (define (report-summary)
     (if (reporter-use-colors?)
@@ -77,7 +88,7 @@
         (display "."))
     (flush-output))
 
-  (define (short/failure-formatter result)
+  (define (short/failure-formatter result _)
     (if (reporter-use-colors?)
         (fmt #t (fmt-red "F"))
         (display "F"))
@@ -115,28 +126,14 @@
                              (verification-result-subject result))))))
       (print (conc (current-success-designator) " " description))))
 
-  (define (doc/failure-formatter result)
-    (if (reporter-use-colors?)
-        (doc/report-failure/colors result)
-        (doc/report-failure/nocolors result)))
 
-  (define (doc/report-failure/colors result)
-    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
+  (define (doc/failure-formatter result failure-id)
+    (let ((colorize (if (reporter-use-colors?) fmt-red identity))
+          (description (or (meta-data-get (verification-result-subject result) 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression
                              (verification-result-subject result))))))
-      (fmt #t (fmt-red (cat (current-failure-designator) " " description)))
-      (newline)
-      (fmt #t (cat "  " (fmt-red (verification-result-message result))))
-      (newline)))
-
-  (define (doc/report-failure/nocolors result)
-    (let ((description (or (meta-data-get (verification-result-subject result) 'description)
-                           (pretty-print-expression
-                            (verification-subject-quoted-expression
-                             (verification-result-subject result))))))
-      (print (conc (current-failure-designator) " "  description))
-      (print (conc "  " (verification-result-message result)))))
+      (fmt #t (colorize (cat (current-failure-designator) "  " description " [ID: " failure-id "]" nl)))))
 
 
   (define (doc/pending-formatter result)
