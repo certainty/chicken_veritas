@@ -137,28 +137,14 @@
 
 
   (define (doc/pending-formatter result)
-    (if (reporter-use-colors?)
-        (doc/report-pending/colors result)
-        (doc/report-pending/nocolors result)))
-
-  (define (doc/report-pending/colors result)
-    (let* ((subj (verification-result-subject result))
+    (let* ((colorize (if (reporter-use-colors?) fmt-yellow identity))
+           (subj (verification-result-subject result))
            (description (or (meta-data-get subj 'description)
                            (pretty-print-expression
                             (verification-subject-quoted-expression subj))))
            (reason (meta-data-get subj 'pending))
            (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
-      (fmt #t (fmt-yellow (cat (current-pending-designator) reason-str " " description)))
-      (newline)))
-
-  (define (doc/report-pending/nocolors result)
-    (let* ((subj (verification-result-subject result))
-           ( description (or (meta-data-get subj 'description)
-                             (pretty-print-expression
-                              (verification-subject-quoted-expression subj))))
-           (reason (meta-data-get subj 'pending))
-           (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
-      (print (conc (current-pending-designator) reason-str " " description))))
+      (fmt #t (colorize (cat (current-pending-designator) reason-str " " description nl)))))
 
   (define (pretty-print-expression expr)
     (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
