@@ -34,4 +34,4 @@
 
 (verify 3 (is > 3))
 
-(verify "This is my text\nfooo" (is "This is expected\nbarbaz"))
+(verify "This is my\nfooo" (is "This is my\nbarbaz"))
