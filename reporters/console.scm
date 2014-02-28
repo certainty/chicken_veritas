@@ -1,6 +1,6 @@
 (module veritas-console-reporter
   (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
-  (import chicken scheme extras)
+  (import chicken scheme extras srfi-13)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity string-split))
 
   (define current-column (make-parameter 0))
@@ -72,7 +72,8 @@
   (define (report-failed-verification entry)
     (let ((id     (car entry))
           (result (cdr entry)))
-      (fmt #t (space-to 4) (cat id ") " (extract-description result) nl nl))
+      (fmt #t (space-to 4) (cat id ") " (extract-description result) nl))
+      (newline)
       (report-failure-details result)
       (fmt #t nl)))
 
@@ -111,6 +112,8 @@
       (flush-output)))
 
   ;; formatters
+  (define current-formatter (make-parameter #f))
+
   ;; short
   (define (short/success-formatter result)
     (fmt #t ((colorize fmt-green) "."))
@@ -127,7 +130,8 @@
   (define (use-short-formatter)
     (current-success-formatter short/success-formatter)
     (current-failure-formatter short/failure-formatter)
-    (current-pending-formatter short/pending-formatter))
+    (current-pending-formatter short/pending-formatter)
+    (current-formatter 'short))
 
   ;; documentation
   (define (doc/success-formatter result)
@@ -147,15 +151,31 @@
            (space-to (current-column))
            ((colorize fmt-yellow) (cat (current-pending-designator) " " (extract-description result) " " reason-str nl)))))
 
+  (define (group-handler groupname state)
+    (when (eq? 'documentation (current-formatter))
+      (cond
+       ((eq? 'start state)
+        (newline)
+        (fmt #t (space-to (current-column)) ((colorize fmt-bold) groupname) nl)
+        (current-column (+ (current-column) 2)))
+       ((eq? 'end state)
+        (current-column (- (current-column) 2)))
+       (else #t))))
+
   (define (pretty-print-expression expr)
-    (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
-        `(,(car expr) ,(cadr expr))
-        expr))
+    (string-trim-right
+     (fmt #f
+          (pretty
+           (if (and (= 3 (length expr)) (equal? '(boolean-verifier) (caddr expr)))
+               `(,(car expr) ,(cadr expr))
+               expr)))
+     #\newline))
 
   (define (use-documentation-formatter)
     (current-success-formatter doc/success-formatter)
     (current-failure-formatter doc/failure-formatter)
-    (current-pending-formatter doc/pending-formatter))
+    (current-pending-formatter doc/pending-formatter)
+    (current-formatter 'documentation))
 
   ;;the defaut is the short-formatter
   (use-short-formatter)
@@ -163,6 +183,7 @@
   (add-success-listener report-success)
   (add-failure-listener report-failure)
   (add-pending-listener report-pending)
+  (add-group-listener    group-handler)
 
   (on-exit (lambda ()
              (newline)
