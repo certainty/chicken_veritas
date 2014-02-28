@@ -92,7 +92,6 @@
     (let* ((failed-count (length failed-verifications))
            (pending-count (length pending-verifications))
            (total-count (+ passed-count failed-count pending-count)))
-      (newline)
       (printf "Total: ~a Passed: ~a Pending: ~a Failed: ~a" total-count passed-count pending-count failed-count)
       (newline)
       (flush-output)))
@@ -101,7 +100,6 @@
     (let* ((failed-count (length failed-verifications))
            (pending-count (length pending-verifications))
            (total-count (+ passed-count failed-count pending-count)))
-      (newline)
       (fmt #t (cat
                (fmt-bold (cat "Total: " total-count))
                " "
@@ -168,6 +166,7 @@
   (add-pending-listener report-pending)
 
   (on-exit (lambda ()
+             (newline)
              (newline)
              (report-details)
              (newline)
