@@ -1,5 +1,5 @@
-(module veritas-dissection-reporter
-  ()
+(module veritas-dissection
+  (dissect-every-failure)
   (import chicken scheme)
   (use veritas veritas-base-reporter dissector)
 
