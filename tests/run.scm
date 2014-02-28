@@ -11,7 +11,7 @@
   (syntax-rules ()
     ((_ (subject-name verify-exp) body0 ...)
      (with-protocol* verify-exp
-      ((lambda (subject-name) body0 ...) (verification-result-subject (car  success-notifications)))))))
+      ((lambda (subject-name) body0 ...) (verification-result-subject (car success-notifications)))))))
 
 
 ;; (test-group "running verifications"

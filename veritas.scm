@@ -28,18 +28,35 @@
 
 ;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
-(define current-failure-notification-receiver (make-parameter (constantly #t)))
-(define current-success-notification-receiver (make-parameter (constantly #t)))
-(define current-pending-notification-receiver (make-parameter (constantly #t)))
+(define current-failure-listeners (make-parameter'()))
+(define current-success-listeners (make-parameter'()))
+(define current-pending-listeners (make-parameter'()))
+
+(define (add-listener bucket proc)
+  (unless (procedure? proc)
+    (error 'add-listener "You must provide a procedure"))
+  (bucket (append (bucket) (list proc))))
+
+(define (add-failure-listener proc)
+  (add-listener current-failure-listeners proc))
+
+(define (add-success-listener proc)
+  (add-listener current-success-listeners proc))
+
+(define (add-pending-listener proc)
+  (add-listener current-pending-listeners proc))
+
+(define (invoke-listeners bucket result)
+  (for-each (cut <> result) (bucket)))
 
 (define (notify-failure result)
-  ((current-failure-notification-receiver) result))
+  (invoke-listeners current-failure-listeners result))
 
 (define (notify-success result)
-  ((current-success-notification-receiver) result))
+  (invoke-listeners current-success-listeners result))
 
 (define (notify-pending result)
-  ((current-pending-notification-receiver) result))
+  (invoke-listeners current-pending-listeners result))
 
 (define (notify result)
   (cond
@@ -65,9 +82,9 @@
 (define (collect-verification-results thunk)
   (let* ((results '())
          (handler (lambda (result) (set! results (cons result results)))))
-    (parameterize ((current-failure-notification-receiver handler)
-                   (current-success-notification-receiver handler)
-                   (current-pending-notification-receiver handler))
+    (parameterize ((current-success-listeners (list handler))
+                   (current-failure-listeners (list handler))
+                   (current-pending-listeners (list handler)))
       (thunk)
       (reverse results))))
 

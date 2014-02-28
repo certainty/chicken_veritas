@@ -163,9 +163,9 @@
   ;;the defaut is the short-formatter
   (use-short-formatter)
 
-  (current-success-notification-receiver report-success)
-  (current-failure-notification-receiver report-failure)
-  (current-pending-notification-receiver report-pending)
+  (add-success-listener report-success)
+  (add-failure-listener report-failure)
+  (add-pending-listener report-pending)
 
   (on-exit (lambda ()
              (newline)
