@@ -1,4 +1,4 @@
-(use veritas-console veritas-quickcheck data-generators)
+(use veritas-console veritas-quickcheck data-generators veritas-dissection-reporter)
 
 (use-documentation-formatter)
 ;(use-short-formatter)
@@ -41,7 +41,8 @@
   ;; reported only once
   (verify subj (is > 0)))
 
-(verify 3.0 (is 3.01))
+(meta (dissect: #t)
+   (verify 3.0 (is 3.01)))
 
 ;; Grouping
 (group "Root"
