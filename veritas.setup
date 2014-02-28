@@ -3,8 +3,8 @@
 (compile -s -d0 -O3 -S veritas.scm -j veritas)
 (compile -s -d0 -O3 veritas.import.scm)
 
-(compile -s -d0 -O3 -S veritas-verifiers.scm -j veritas-verifiers)
-(compile -s -d0 -O3 veritas-verifiers.import.scm)
+(compile -s -d0 -O3 -S verifiers/is.scm -j veritas-verifiers-is -o veritas-verifiers-is.so)
+(compile -s -d0 -O3 veritas-verifiers-is.import.scm)
 
 (compile -s -d0 -O3 -S veritas-quickcheck.scm -j veritas-quickcheck)
 (compile -s -d0 -O3 veritas-quickcheck.import.scm)
@@ -27,14 +27,17 @@
 (compile -s -d0 -O3 -S veritas-console -j veritas-console -o veritas-console.so)
 (compile -s -d0 -O3 veritas-console.import.scm)
 
+(compile -s -d0 -O3 -S veritas-verifiers -j veritas-verifiers -o veritas-verifiers.so)
+(compile -s -d0 -O3 veritas-verifiers.import.scm)
+
 (install-extension
   'veritas
   '("veritas.import.so" "veritas.so")
   `((version ,version)))
 
 (install-extension
-  'veritas-verifiers
-  '("veritas-verifiers.import.so" "veritas-verifiers.so")
+  'veritas-verifiers-is
+  '("veritas-verifiers-is.import.so" "veritas-verifiers-is.so")
   `((version ,version)))
 
 (install-extension
@@ -65,4 +68,9 @@
 (install-extension
   'veritas-console
   '("veritas-console.import.so" "veritas-console.so")
+  `((version ,version)))
+
+(install-extension
+  'veritas-verifiers
+  '("veritas-verifiers.import.so" "veritas-verifiers.so")
   `((version ,version)))
