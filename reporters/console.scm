@@ -56,7 +56,6 @@
     (fmt #t (fmt-bold "Pending:") nl)
     (for-each report-pending-verification pending-verifications))
 
-
   (define (report-pending-verification result)
     (fmt #t (space-to 4) ((colorize fmt-yellow) (extract-description result) nl)))
 
