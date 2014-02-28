@@ -28,14 +28,22 @@
 
 ;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
-(define current-failure-listeners (make-parameter'()))
-(define current-success-listeners (make-parameter'()))
-(define current-pending-listeners (make-parameter'()))
+(define current-verification-listeners (make-parameter '()))
+(define current-failure-listeners      (make-parameter '()))
+(define current-success-listeners      (make-parameter '()))
+(define current-pending-listeners      (make-parameter '()))
+(define current-group-listeners        (make-parameter '()))
 
 (define (add-listener bucket proc)
   (unless (procedure? proc)
     (error 'add-listener "You must provide a procedure"))
   (bucket (append (bucket) (list proc))))
+
+(define (add-verification-listener proc)
+  (add-listener current-verification-listeners proc))
+
+(define (add-group-listener proc)
+  (add-listener current-group-listeners proc))
 
 (define (add-failure-listener proc)
   (add-listener current-failure-listeners proc))
@@ -46,8 +54,12 @@
 (define (add-pending-listener proc)
   (add-listener current-pending-listeners proc))
 
-(define (invoke-listeners bucket result)
-  (for-each (cut <> result) (bucket)))
+(define (invoke-listeners bucket . args)
+  (for-each (cut apply <> args) (bucket)))
+
+
+(define (notify-verification . args)
+  (apply invoke-listeners current-verification-listeners args))
 
 (define (notify-failure result)
   (invoke-listeners current-failure-listeners result))
@@ -57,6 +69,9 @@
 
 (define (notify-pending result)
   (invoke-listeners current-pending-listeners result))
+
+(define (notify-group . args)
+  (apply invoke-listeners current-group-listeners args))
 
 (define (notify result)
   (cond
@@ -102,11 +117,11 @@
   result)
 
 (define (apply-verifier subject verifier complement?)
-  (verifier subject complement?)
-  ;; add timing and error handling
-  ;; (condition-case (verifier subject complement?)
-  ;;   (e () (condition->verification-failure e)))
-  )
+  (notify-verification 'start subject verifier)
+  (let ((result (condition-case (verifier subject complement?)
+                  (e () (condition->verification-failure e)))))
+    (notify-verification 'end subject verifier result)
+    result))
 
 (define (condition->verification-failure condition) #t)
 
@@ -181,21 +196,17 @@
      (meta (description: description)
          body0 ...))))
 
-(define current-groups (make-parameter '()))
-
 (define-syntax group
   (syntax-rules ()
     ((_ groupname body0 ...)
-     (parameterize ((current-groups (cons groupname (current-groups))))
+     (begin
+       (notify-group groupname 'start)
        (meta (group: groupname)
-             body0 ...)))))
+          body0 ...)
+       (notify-group groupname 'end)))))
 
 (define-syntax meta
   (syntax-rules ()
     ((_ (k v ...) body0 ...)
      (parameterize ((current-meta-data (merge-meta-data (quote (k v ...)))))
-       body0 ...))))
-
-
-
-)
+       body0 ...)))))
