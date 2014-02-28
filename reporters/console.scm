@@ -53,11 +53,15 @@
     (report-failed-verifications))
 
   (define (report-pending-verifications)
-    (fmt #t (fmt-bold "Pending:") nl)
-    (for-each report-pending-verification pending-verifications))
+    (unless (null? pending-verifications)
+      (fmt #t (fmt-bold "Pending:") nl)
+      (for-each report-pending-verification pending-verifications)))
 
   (define (report-pending-verification result)
-    (fmt #t (space-to 4) ((colorize fmt-yellow) (extract-description result) nl)))
+    (let* ((reason (meta-data-get (verification-result-subject result) 'pending)))
+      (fmt #t (space-to 4) ((colorize fmt-yellow) (cat (extract-description result) " is pending") nl))
+      (if reason
+          (fmt #t (space-to 4) ((colorize fmt-yellow) (cat "REASON: " reason)) nl))))
 
   (define (extract-description result)
     (or (meta-data-get (verification-result-subject result) 'description)
@@ -66,8 +70,9 @@
           (verification-result-subject result)))))
 
   (define (report-failed-verifications)
-    (fmt #t (fmt-bold "Failed:") nl)
-    (for-each report-failed-verification (reverse failed-verifications)))
+    (unless (null? failed-verifications)
+      (fmt #t (fmt-bold "Failed:") nl)
+      (for-each report-failed-verification (reverse failed-verifications))))
 
   (define (report-failed-verification entry)
     (let ((id     (car entry))
@@ -182,7 +187,7 @@
 
   (define (doc/pending-formatter result)
     (let* ((reason (meta-data-get (verification-result-subject result) 'pending))
-           (reason-str (if (string? reason) (conc "[" reason "]: ") "")))
+           (reason-str (if (string? reason) (conc "[" reason "] ") "")))
       (fmt #t
            (space-to (current-column))
            ((colorize fmt-yellow) (cat (current-pending-designator) " " (extract-description result) " " reason-str nl)))))
@@ -191,10 +196,10 @@
     (when (eq? 'documentation (current-formatter))
       (cond
        ((eq? 'start state)
-        (newline)
         (fmt #t (space-to (current-column)) ((colorize fmt-bold) groupname) nl)
         (current-column (+ (current-column) 2)))
        ((eq? 'end state)
+        (newline)
         (current-column (- (current-column) 2)))
        (else #t))))
 
