@@ -181,6 +181,15 @@
      (meta (description: description)
          body0 ...))))
 
+(define current-groups (make-parameter '()))
+
+(define-syntax group
+  (syntax-rules ()
+    ((_ groupname body0 ...)
+     (parameterize ((current-groups (cons groupname (current-groups))))
+       (meta (group: groupname)
+             body0 ...)))))
+
 (define-syntax meta
   (syntax-rules ()
     ((_ (k v ...) body0 ...)
