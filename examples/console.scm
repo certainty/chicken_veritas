@@ -1,7 +1,7 @@
 (use veritas-console veritas-quickcheck data-generators)
 
 (use-documentation-formatter)
-(use-short-formatter)
+;(use-short-formatter)
 
 ;; adding descriptions
 (verify #t "This is a test")
