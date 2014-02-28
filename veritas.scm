@@ -1,17 +1,17 @@
 (module veritas
   *
-  (import chicken scheme data-structures extras srfi-1 kvlists)
+  (import chicken scheme data-structures extras srfi-1 kvlists ports)
   (require-library matchable kvlists)
   (import-for-syntax matchable)
 
 (define current-meta-data (make-parameter '()))
 
 (define-record verification-subject quoted-expression expression-promise meta-data)
-(define-record verification-result id subject message status)
+(define-record verification-result id subject message status condition stacktrace)
 
-(define (fail    subject message) (make-verification-result 'nil subject message 'fail))
-(define (pass    subject)         (make-verification-result 'nil subject "" 'pass))
-(define (pending subject)         (make-verification-result 'nil subject "" 'pending))
+(define (fail    subject message) (make-verification-result #f subject message 'fail #f #f))
+(define (pass    subject)         (make-verification-result #f subject "" 'pass #f #f))
+(define (pending subject)         (make-verification-result #f subject "" 'pending #f #f))
 
 (define (verification-failure? result)
   (and (verification-result? result)
@@ -119,11 +119,12 @@
 (define (apply-verifier subject verifier complement?)
   (notify-verification 'start subject verifier)
   (let ((result (condition-case (verifier subject complement?)
-                  (e () (condition->verification-failure e)))))
+                  (e () (condition->verification-failure subject e (with-output-to-string print-call-chain))))))
     (notify-verification 'end subject verifier result)
     result))
 
-(define (condition->verification-failure condition) #t)
+(define (condition->verification-failure subject condition stacktrace)
+  (make-verification-result 'nil subject (get-condition-property condition 'exn 'message) 'fail condition stacktrace))
 
 ;; the verifier protocol is simple
 ;; a verifier is a procedure that returns a procedure of two arguments

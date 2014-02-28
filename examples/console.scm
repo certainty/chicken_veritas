@@ -41,8 +41,8 @@
   ;; reported only once
   (verify subj (is > 0)))
 
-(meta (dissect: #t)
-   (verify 3.0 (is 3.01)))
+;; (meta (dissect: #t)
+;;    (verify 3.0 (is 3.01)))
 
 ;; Grouping
 (group "Root"
@@ -58,3 +58,9 @@
         (verify 3 (is 3)))
       (describe "Error with wrapping description"
         (verify 3 (is 4))))))
+
+;; conditions inside verifications
+(define (raising-proc)
+  (error 'raising-proc "This is my error"))
+
+(verify (raising-proc) (is 3))

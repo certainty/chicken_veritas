@@ -55,9 +55,7 @@
           (printf "     got: ~s~%" actual)
           (when (or (> (length actual-lines) 1) (> (length expected-lines) 1))
             (let ((hunks (textdiff actual-lines expected-lines 3)))
-              (print " \n")
-              (print "Diff:")
-              (print " \n")
+              (print "\nDiff:")
               ((make-format-textdiff 'context) (current-output-port) hunks "actual" "" "expected" "")))))))
    (else
     (with-output-to-string
