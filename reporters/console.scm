@@ -1,6 +1,6 @@
 (module veritas-console-reporter
   (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
-  (import chicken scheme extras srfi-13)
+  (import chicken scheme extras srfi-13 ports srfi-1)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity string-split))
 
   (define current-column (make-parameter 0))
@@ -74,14 +74,50 @@
           (result (cdr entry)))
       (fmt #t (space-to 4) (cat id ") " (extract-description result) nl))
       (newline)
-      (report-failure-details result)
-      (fmt #t nl)))
+      (report-failure-details result)))
 
   (define (report-failure-details result)
-    (fmt #t (format-failure-lines (verification-result-message result) 8) nl))
+    (cond
+     ((verification-result-condition result)
+      (fmt #t (format-failure-lines (format-condition result) 8)))
+     (else
+      (fmt #t (format-failure-lines (verification-result-message result) 8) nl))))
+
+  (define (format-condition result)
+    (with-output-to-string
+      (lambda ()
+        (let ((condition (verification-result-condition result)))
+          (fmt #t (cat (verification-result-message result) " CONDITION") nl)
+          (newline)
+          (let ((ls (condition->list condition)))
+            (for-each
+             (lambda (elt)
+               (fmt #t (format-condition-kind (car elt) (cdr elt)) nl))
+             ls))
+          (let ((callchain ((condition-property-accessor 'exn 'call-chain '()) condition)))
+            (fmt #t (cleanup-callchain (verification-result-stacktrace result))))))))
+
+  (define (cleanup-callchain string)
+    (string-join
+     (map (lambda (line) (string-trim line #\tab))
+          (string-split string "\n"))
+     "\n"))
+
+  (define (format-condition-kind kind properties)
+    (with-output-to-string
+      (lambda ()
+        (let* ((props (remove (lambda (elt) (eq? 'call-chain (car elt))) properties))
+               (->string    (lambda (e) (sprintf "~a" e)))
+               (prop-keys   (map (o ->string car) props))
+               (prop-values (map (o ->string cadr) props)))
+          (fmt #t (cat "Kind: " kind) nl)
+          (fmt #t "Properties: " nl)
+          (fmt #t (tabular " | "
+                           (dsp (string-join prop-keys " \n")) " | "
+                           (dsp (string-join prop-values " \n")) " | ") nl)))))
 
   (define (format-failure-lines text spaces)
-    (apply cat (map (lambda (text) (cat (space-to spaces) ((colorize fmt-red) text) nl)) (string-split text "\n"))))
+    (apply cat (map (lambda (text) (cat (space-to spaces) ((colorize fmt-red) text) nl)) (string-split text "\n" #t))))
 
   (define (report-summary)
     (if (reporter-use-colors?)

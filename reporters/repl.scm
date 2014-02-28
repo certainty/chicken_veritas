@@ -20,7 +20,7 @@
     (display (conc (current-success-designator) "  ") out))
 
   (define (print-failure/colors result out)
-    (fmt out (fmt-red (fmt-bold (cat (current-failure-designator) "  "))))
+    (fmt out (fmt-red (fmt-bold (cat (current-failure-designator) "  FAILED"))) nl)
     (fmt out (fmt-red (verification-result-message result))))
 
   (define (print-failure/nocolors result out)
