@@ -19,17 +19,13 @@
     (set! failure-notifications (list))
     (set! pending-notifications (list)))
 
+  (define-syntax collect-in
+    (syntax-rules ()
+      ((_ bucket)
+       (lambda (result) (set! bucket (cons result bucket))))))
 
-  (current-success-notification-receiver
-   (lambda (result)
-     (set! success-notifications (cons result success-notifications))))
-
-  (current-failure-notification-receiver
-   (lambda (result)
-     (set! failure-notifications (cons result failure-notifications))))
-
-  (current-pending-notification-receiver
-   (lambda (result)
-     (set! pending-notifications (cons result pending-notifications))))
+  (add-success-listener (collect-in success-notifications))
+  (add-failure-listener (collect-in failure-notifications))
+  (add-pending-listener (collect-in pending-notifications))
 
 )
