@@ -41,6 +41,8 @@
   ;; reported only once
   (verify subj (is > 0)))
 
+(verify 3.0 (is 3.01))
+
 ;; Grouping
 (group "Root"
   (verify 3 (is 3))
