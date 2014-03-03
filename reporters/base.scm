@@ -1,7 +1,6 @@
 (module veritas-base-reporter
   *
-  (import chicken scheme data-structures csi)
-  (use veritas)
+  (import chicken scheme data-structures)
 
   (define report-designator-map
     `((plain  . ("[passed]" "[failed]" "[pending]"))
