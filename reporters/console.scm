@@ -67,10 +67,10 @@
       (fmt #t nl)))
 
   (define (extract-description result)
-    (or (meta-data-get (verification-result-subject result) 'description)
-        (pretty-print-expression
-         (verification-subject-quoted-expression
-          (verification-result-subject result)))))
+    (let ((subject (verification-result-subject result)))
+      (or (meta-data-get subject 'description)
+          (pretty-print-expression
+           (verification-subject-quoted-expression subject)))))
 
   (define (report-failed-verifications)
     (unless (null? failed-verifications)
