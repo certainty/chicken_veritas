@@ -8,7 +8,7 @@
       (fancy . (" ✔" " ✘" " ☐"))
       (smileys . (" ☺" " ☹" " ☐"))))
 
-  ;; support procedures for reporter
+
   (define reporter-use-colors?
     (make-parameter
      (cond
