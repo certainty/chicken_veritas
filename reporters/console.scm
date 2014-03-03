@@ -1,5 +1,5 @@
 (module veritas-console-reporter
-  (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code)
+  (use-short-formatter use-documentation-formatter current-failure-exit-code current-success-exit-code report-status-on-exit)
   (import chicken scheme extras srfi-13 ports srfi-1)
   (use veritas veritas-base-reporter fmt fmt-color posix (only data-structures conc identity string-split))
 
@@ -9,6 +9,8 @@
   (define pending-verifications '())
 
   (define current-description #f)
+
+  (define report-status-on-exit (make-parameter #t))
 
   (define current-failure-exit-code (make-parameter 1))
   (define current-success-exit-code (make-parameter 0))
@@ -227,11 +229,12 @@
   (add-group-listener    group-handler)
 
   (on-exit (lambda ()
-             (newline)
-             (newline)
-             (report-details)
-             (newline)
-             (report-summary)
-             (_exit (if (failures?) (current-failure-exit-code) (current-success-exit-code)))))
+             (when (report-status-on-exit)
+               (newline)
+               (newline)
+               (report-details)
+               (newline)
+               (report-summary)
+               (_exit (if (failures?) (current-failure-exit-code) (current-success-exit-code))))))
 
   )

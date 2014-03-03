@@ -25,7 +25,6 @@
   (and (verification-result? result)
        (eq? 'pending (verification-result-status result))))
 
-
 ;; The base library assumes nothing about outputting/handling  failed or succeeded verifications.
 ;; All it does is provide a protocoll that other parts can hook into to actually do something useful with this information
 (define current-verification-listeners (make-parameter '()))
@@ -57,7 +56,6 @@
 (define (invoke-listeners bucket . args)
   (for-each (cut apply <> args) (bucket)))
 
-
 (define (notify-verification . args)
   (apply invoke-listeners current-verification-listeners args))
 
@@ -84,7 +82,6 @@
    (else (error "invalid result" result)))
   result)
 
-;; META-DATA
 (define (merge-alists lhs rhs)
   (fold (lambda (elt ls) (alist-update (car elt) (cdr elt) ls)) lhs rhs))
 
@@ -106,7 +103,7 @@
 ;; this little indirection is here to have control over
 ;; how/if tests are run.
 ;; for example one might want to run them in a sandbox
-;; or in its own thread
+;; or in their own thread
 (define (run-verification id subject verifier complement?)
   (if (meta-data-get subject 'pending)
       (set-id! id (pending subject))
@@ -124,7 +121,12 @@
     result))
 
 (define (condition->verification-failure subject condition stacktrace)
-  (make-verification-result 'nil subject (get-condition-property condition 'exn 'message) 'fail condition stacktrace))
+  (make-verification-result 'nil
+                            subject
+                            (get-condition-property condition 'exn 'message)
+                            'fail
+                            condition
+                            stacktrace))
 
 ;; the verifier protocol is simple
 ;; a verifier is a procedure that returns a procedure of two arguments
@@ -141,6 +143,7 @@
                   (sprintf "Expected ~S not to hold" (cadr quoted-expr))
                   (sprintf "Expected ~S to hold" (cadr quoted-expr)))))))
 
+;; syntax
 (define-syntax define-verify
   (syntax-rules ()
     ((_ name complement?)
@@ -210,4 +213,6 @@
   (syntax-rules ()
     ((_ (k v ...) body0 ...)
      (parameterize ((current-meta-data (merge-meta-data (quote (k v ...)))))
-       body0 ...)))))
+       body0 ...))))
+
+)

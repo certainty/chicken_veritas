@@ -1,5 +1,5 @@
 (module veritas-quickcheck
-  *
+  (current-sample-size quickcheck)
   (import chicken scheme srfi-1)
   (use veritas data-generators)
 
@@ -9,7 +9,6 @@
   (let* ((results (collect-verification-results proc))
          (groups  (group-by verification-result-id results)))
     (for-each report-group groups)))
-
 
 (define (report-group group)
   (let ((results (cdr group)))
