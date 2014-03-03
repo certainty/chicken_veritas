@@ -5,21 +5,6 @@
 
   (report-status-on-exit #f)
 
-  ;; the console reporter might call exit
-  ;; we don't want this
-
-  (define-syntax without-exit
-    (syntax-rules ()
-      ((_ ?body ...)
-       (let ((id (advise 'around _exit (lambda (proc args) #t))))
-         (handle-exceptions exn
-                            (begin
-                              (unadvise _exit id)
-                              (signal exn))
-
-          (begin ?body ...)
-          (unadvise _exit id))))))
-
   (define-syntax test-contains?
     (syntax-rules ()
       ((_ ?args ...)
@@ -35,16 +20,14 @@
   (define-syntax with-colors
     (syntax-rules ()
       ((_  ?body ...)
-       (without-exit
-        (parameterize ((reporter-use-colors? #t))
-          ?body ...)))))
+       (parameterize ((reporter-use-colors? #t))
+         ?body ...))))
 
   (define-syntax without-colors
     (syntax-rules ()
       ((_ ?body ...)
-       (without-exit
-        (parameterize ((reporter-use-colors? #f))
-          ?body ...)))))
+       (parameterize ((reporter-use-colors? #f))
+         ?body ...))))
 
   (define example-output-with-colors #<<EOF
 test
@@ -89,70 +72,72 @@ EOF
     (receive (i o pid e) (process* "csi" (list "-s" path))
       (read-all i)))
 
-  (test "Integration with colors"
-        example-output-with-colors
-        (run-veritas-file "console-integration-colors.scm"))
+(test-group "console reporter"
+            ;; these are our smoke tests for this reporter
+            (test "Integration with colors"
+                  example-output-with-colors
+                  (run-veritas-file "console-integration-colors.scm"))
 
-  (test "Integration without colors"
-        example-output-without-colors
-        (run-veritas-file "console-integration-no-colors.scm"))
+            (test "Integration without colors"
+                  example-output-without-colors
+                  (run-veritas-file "console-integration-no-colors.scm"))
 
-  ;; unit level
-  (test-group "short reporter"
-              (use-short-formatter)
-              (test-group "successful tests"
-                          (test-group "with colors"
-                                      (test "It prints a green dot"
-                                            "\x1b[32m.\x1b[0m"
-                                            (capture (with-colors  (verify #t "it is true")))))
+            ;; unit tests
+            (test-group "short reporter"
+                        (use-short-formatter)
+                        (test-group "successful tests"
+                                    (test-group "with colors"
+                                                (test "It prints a green dot"
+                                                      "\x1b[32m.\x1b[0m"
+                                                      (capture (with-colors  (verify #t "it is true")))))
 
-                          (test-group "without colors"
-                                      (test "It prints a dot"
-                                            "." (capture (without-colors (verify #t "it is true"))))))
-
-
-              (test-group "failung tests"
-                          (test-group "with colors"
-                                      (test "It prints a red F"
-                                            "\x1b[31mF\x1b[0m"
-                                            (capture (with-colors  (verify #f "it is false")))))
-                          (test-group "without colores"
-                                      (test "It prints an F"
-                                            "F"
-                                            (capture (without-colors (verify #f "it is false"))))))
-
-              (test-group "pending tests"
-                          (test-group "with colors"
-                                      (test "It prints a yellow P"
-                                            "\x1b[33mP\x1b[0m"
-                                            (capture (with-colors (pending (verify #t))))))
-                          (test-group "without colors"
-                                      (test "It prints a P"
-                                            "P"
-                                            (capture (without-colors (pending (verify #t))))))))
+                                    (test-group "without colors"
+                                                (test "It prints a dot"
+                                                      "." (capture (without-colors (verify #t "it is true"))))))
 
 
-  (test-group "documentation reporter"
-              (use-documentation-formatter)
-              (test-group "successful tests"
-                          (test-group "with colors"
-                                      (test "It prints the expression in green"
-                                            "\x1b[32m ✔ (verify #t)\n\x1b[0m"
-                                            (capture (with-colors (verify #t))))
-                                      (test "It prints the description in green"
-                                             "\x1b[32m ✔ It succeeds\n\x1b[0m"
-                                            (capture (with-colors (verify #t "It succeeds")))))
+                        (test-group "failung tests"
+                                    (test-group "with colors"
+                                                (test "It prints a red F"
+                                                      "\x1b[31mF\x1b[0m"
+                                                      (capture (with-colors  (verify #f "it is false")))))
+                                    (test-group "without colores"
+                                                (test "It prints an F"
+                                                      "F"
+                                                      (capture (without-colors (verify #f "it is false"))))))
 
-                          (test-group "without colors"
-                                      (test "it prints the expression"
-                                            " ✔ (verify #t)\n"
-                                            (capture (without-colors (verify #t))))
-                                      (test "it prints the description"
-                                            " ✔ It succeeds\n"
-                                            (capture (without-colors (verify #t "It succeeds"))))))
+                        (test-group "pending tests"
+                                    (test-group "with colors"
+                                                (test "It prints a yellow P"
+                                                      "\x1b[33mP\x1b[0m"
+                                                      (capture (with-colors (pending (verify #t))))))
+                                    (test-group "without colors"
+                                                (test "It prints a P"
+                                                      "P"
+                                                      (capture (without-colors (pending (verify #t))))))))
+
+
+            (test-group "documentation reporter"
+                        (use-documentation-formatter)
+                        (test-group "successful tests"
+                                    (test-group "with colors"
+                                                (test "It prints the expression in green"
+                                                      "\x1b[32m ✔ (verify #t)\n\x1b[0m"
+                                                      (capture (with-colors (verify #t))))
+                                                (test "It prints the description in green"
+                                                      "\x1b[32m ✔ It succeeds\n\x1b[0m"
+                                                      (capture (with-colors (verify #t "It succeeds")))))
+
+                                    (test-group "without colors"
+                                                (test "it prints the expression"
+                                                      " ✔ (verify #t)\n"
+                                                      (capture (without-colors (verify #t))))
+                                                (test "it prints the description"
+                                                      " ✔ It succeeds\n"
+                                                      (capture (without-colors (verify #t "It succeeds"))))))
 
 
 
-              )
+                        ))
 
 )
