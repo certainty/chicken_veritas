@@ -56,14 +56,15 @@
 
   (define (report-pending-verifications)
     (unless (null? pending-verifications)
-      (fmt #t (fmt-bold "Pending:") nl)
+      (fmt #t ((colorize fmt-bold) "Pending:") nl)
       (for-each report-pending-verification pending-verifications)))
 
   (define (report-pending-verification result)
     (let* ((reason (meta-data-get (verification-result-subject result) 'pending)))
-      (fmt #t (space-to 4) ((colorize fmt-yellow) (cat (extract-description result) " is pending") nl))
-      (if reason
-          (fmt #t (space-to 4) ((colorize fmt-yellow) (cat "REASON: " reason)) nl))))
+      (fmt #t (space-to 4) ((colorize fmt-yellow) (cat (extract-description result) " is pending")) nl)
+      (when (string? reason)
+          (fmt #t (space-to 4) ((colorize fmt-yellow) (cat "REASON: " reason)) nl))
+      (fmt #t nl)))
 
   (define (extract-description result)
     (or (meta-data-get (verification-result-subject result) 'description)
@@ -73,7 +74,7 @@
 
   (define (report-failed-verifications)
     (unless (null? failed-verifications)
-      (fmt #t (fmt-bold "Failed:") nl)
+      (fmt #t ((colorize fmt-bold) "Failed:") nl)
       (for-each report-failed-verification (reverse failed-verifications))))
 
   (define (report-failed-verification entry)
@@ -234,7 +235,7 @@
                (newline)
                (report-details)
                (newline)
-               (report-summary)
-               (_exit (if (failures?) (current-failure-exit-code) (current-success-exit-code))))))
+               (report-summary))
+             (_exit (if (failures?) (current-failure-exit-code) (current-success-exit-code)))))
 
   )

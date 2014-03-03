@@ -5,4 +5,4 @@
  (license "MIT")
  (doc-from-wiki)
  (needs fmt matchable kvlists dissector)
- (test-depends test))
+ (test-depends test advice))
