@@ -30,7 +30,7 @@
   (syntax-rules ()
     ((_ (subject generator-expr) body0 ...)
      (let ((proc (lambda (subject) body0 ...))
-           (seq  (gen->sequence (current-sample-size) generator-expr)))
-       (run-quickcheck-verifications (lambda () (run-sequence seq proc)))))))
+           (gen  generator-expr))
+       (run-quickcheck-verifications (lambda () (gen-for-each (curren-sample-size) proc gen)))))))
 
 )
